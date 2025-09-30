@@ -61,6 +61,4 @@
 </section>
 
 
-
-<!-- Script modo oscuro -->
-<script src="/js/script.js"></script>
+ <?php require 'partials/footer.php'; ?>
