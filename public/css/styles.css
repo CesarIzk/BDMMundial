@@ -68,12 +68,13 @@ header {
 .logo { display: flex; align-items: center; gap: 10px; }
 
 /* =======================
-   Nav
-   ======================= */
+   Nav
+   ======================= */
 nav {
   background: var(--nav);
   border-bottom: 1px solid var(--border);
   transition: background .3s, border-color .3s;
+  padding: 5px 0; /* <--- Agrega esta línea para el espacio vertical */
 }
 .nav-wrap {
   display: flex; align-items: center; gap: 16px;
@@ -595,4 +596,78 @@ body.dark-mode .redes-sociales a {
     color: var(--text);
 }
 
-/* --- FIN: REGLAS ADICIONALES PARA FORMULARIOS Y FOOTER --- */
+/* --- ESTILOS PARA EL SLIDER --- */
+
+/* Contenedor principal del slider */
+.slider-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden; /* Oculta los slides que no están activos */
+}
+
+/* Estilo para cada slide */
+.slide {
+    display: none; /* Oculta todos los slides por defecto */
+    animation: fadeIn 0.5s ease-in-out; /* Animación suave */
+}
+
+/* Muestra únicamente el slide que tenga la clase 'active' */
+.slide.active {
+    display: block;
+}
+
+/* Contenedor para los botones de navegación (círculos) */
+.slider-nav {
+    text-align: center;
+    padding-top: 15px;
+}
+
+/* Estilo de cada círculo */
+.dot {
+    cursor: pointer;
+    height: 15px;
+    width: 15px;
+    margin: 0 5px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+/* Estilo del círculo activo o al pasar el mouse */
+.dot.active,
+.dot:hover {
+    background-color: #717171;
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    from { opacity: 0.4 }
+    to { opacity: 1 }
+}
+/* Espacio superior para el contenido principal después del nav */
+.contenido-principal {
+    margin-top: 40px;
+}
+
+/* --- ESTILOS PARA BOTONES DE LIKE/DISLIKE CON IMAGEN --- */
+
+.btn-accion {
+    background: none; /* Quita el fondo del botón */
+    border: none;     /* Quita el borde del botón */
+    padding: 5px;     /* Añade un pequeño espacio interno */
+    cursor: pointer;  /* Muestra la manita al pasar el mouse */
+}
+
+.btn-accion img {
+    width: 30px; /* Ajusta el tamaño de tu imagen */
+    height: auto;
+    display: block; /* Mejora el alineamiento */
+    transition: transform 0.2s ease; /* Transición suave para el hover */
+}
+
+/* Efecto al pasar el mouse sobre el botón */
+.btn-accion:hover img {
+    transform: scale(1.1); /* Agranda un poco la imagen */
+}
