@@ -1,14 +1,15 @@
 <?php
 // api.php
 
-/**
- * Esta función es el punto de entrada para todo el tráfico del sitio.
- * Su único trabajo es incluir el "front controller" de tu aplicación,
- * que es tu archivo index.php principal.
- */
+// 1. Calcula la ruta al archivo index.php
+$indexPath = dirname(__DIR__, 2) . '/public/index.php';
 
-// Define la ruta raíz del proyecto
-define('PROJECT_ROOT', dirname(__DIR__, 2));
+// 2. Comprueba si el archivo realmente existe en esa ruta
+if (!file_exists($indexPath)) {
+    // Si no existe, detiene la ejecución y muestra un error claro.
+    http_response_code(500); // Código de error del servidor
+    die("ERROR EN api.php: No se pudo encontrar el archivo index.php en la ruta: " . $indexPath);
+}
 
-// Carga el punto de entrada de tu aplicación
-require_once PROJECT_ROOT . '/public/index.php';
+// 3. Si el archivo SÍ existe, lo carga.
+require_once $indexPath;
