@@ -1,6 +1,17 @@
-[build]
-  publish = "public"  # Carpeta donde se generará el sitio estático
-  command = "php -d variables_order=EGPCS vendor/bin/php-cs-fixer run"  # Este comando se puede ajustar según tu proyecto
+# netlify.toml
 
-[[plugins]]
-package = "netlify-plugin-php"
+[build]
+  # Directorio que Netlify publicará.
+  # Aquí deben estar tus archivos estáticos (CSS, JS, imágenes).
+  publish = "public"
+
+[functions]
+  # Directorio donde se encuentran tus funciones sin servidor.
+  directory = "netlify/functions"
+
+[[redirects]]
+  # Esta es la regla clave:
+  # Redirige TODAS las peticiones (/*) a nuestra función de PHP.
+  from = "/*"
+  to = "/.netlify/functions/api"
+  status = 200 # Status 200 significa "reescribir" la URL sin cambiarla en el navegador.
