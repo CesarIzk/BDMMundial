@@ -2,6 +2,7 @@
   publish = "public"
 
 [functions]
+  # Esta línea es la que importa ahora
   directory = "netlify/functions"
 
 [[redirects]]
