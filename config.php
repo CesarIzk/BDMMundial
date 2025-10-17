@@ -1,12 +1,11 @@
 <?php
 
 return [
-    'database' => [
-        'host' => 'DESKTOP-V9USV31\SQLEXPRESS',
-        'database' => 'REDSOCIAL',
-        'port' => '1433',
-        'user' => 'izak',
-        'password' => '1442',
-        'charset' => 'utf8mb4'
-    ]
+    "database" => [
+        "host" => "localhost",
+        "user" => "root",
+        "password" => "12345",
+        "dbname" => "pwci_c1",
+        "port" => "3306",
+    ],
 ];
