@@ -1,35 +1,10 @@
-# netlify.toml
-
-
-
 [build]
-
-  # This should be the folder with your index.php and assets (CSS, JS)
-
   publish = "public"
 
-
-
 [functions]
-
-  # This should point to where your serverless functions are
-
   directory = "netlify/functions"
 
-
-
 [[redirects]]
-
-  # Redirects ALL traffic from the root...
-
   from = "/*"
-
-  # ...to your PHP handler function.
-
   to = "/.netlify/functions/api"
-
-  # This is crucial! Status 200 means "rewrite" the path,
-
-  # not "redirect" (which would change the URL in the browser).
-
   status = 200
