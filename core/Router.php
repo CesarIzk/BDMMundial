@@ -2,9 +2,9 @@
 
 namespace Core;
 
-use core\Middleware\Authenticated;
-use core\Middleware\Guest;
-use core\Middleware\Middleware;
+use core\middleware\Authenticated;
+use core\middleware\Guest;
+use core\middleware\Middleware;
 
 class Router
 {
