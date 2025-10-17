@@ -13,10 +13,10 @@ spl_autoload_register(function ($class) {
 
 //require base_path('bootstrap.php');
 
+$router = new \Core\Router();
+$routes = require base_path('routes.php');
+
 $uri = parse_url($_SERVER['REQUEST_URI'])['path'];
 $method = $_POST['_method'] ?? $_SERVER['REQUEST_METHOD'];
-
-// AÑADE ESTA LÍNEA PARA DEPURAR
-die("La URI que ve el router es: " . $uri);
 
 $router->route($uri, $method);
