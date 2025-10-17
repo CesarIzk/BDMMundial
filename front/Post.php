@@ -21,7 +21,7 @@
 
                 </div>
                 <div class="form-group media-estatica">
-                    <video controls src="imagenes/Rashica.MP4"></video>
+                    <video controls src="imagenes/Rashica.mp4"></video>
                 </div>
             </div>
         </div>
