@@ -45,12 +45,12 @@ button {
   border-color: var(--text);
 }
 
-body.dark-mode .btn-secondary {
+html.dark-mode .btn-secondary {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--border);
 }
 
-body.dark-mode .btn-secondary:hover {
+html.dark-mode .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.15);
 }
 

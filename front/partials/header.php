@@ -1,6 +1,5 @@
 <?php
 // front/partials/header.php
-// Detecta si hay sesión activa
 $isLoggedIn = isset($_SESSION['user']);
 $user = $isLoggedIn ? $_SESSION['user'] : null;
 ?>
@@ -12,19 +11,21 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MundialFan - Todo sobre el Mundial de Fútbol</title>
 
-  <!-- Fuente principal -->
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+  <!-- Aplicar tema guardado antes de CSS -->
+  <script>
+    const savedTheme = localStorage.getItem('theme');
+    if(savedTheme === 'dark') {
+      document.documentElement.classList.add('dark-mode');
+    }
+  </script>
 
-  <!-- Bootstrap y Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- CSS fragmentado -->
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css?v=1.0.12">
 </head>
 
 <body>
-  <!-- Header -->
   <header>
     <div class="header-contenido contenedor">
       <a href="/" class="logo">
@@ -34,7 +35,6 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </div>
   </header>
 
-  <!-- Navbar -->
   <nav>
     <div class="nav-wrap">
       <button class="menu-toggle" id="menu-toggle" aria-label="Menú">
@@ -48,10 +48,17 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
         <li><a href="/Post"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
         <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
         <li><a href="/contacto"><i class="fas fa-envelope"></i> <span>Contacto</span></a></li>
+
+        <!-- Botón de tema oscuro integrado en el navbar -->
+   <!-- Botón de modo oscuro integrado en el navbar -->
+<li>
+  <button id="toggle-mode" class="toggle-btn" aria-label="Cambiar modo">
+    <i class="fas fa-moon"></i>
+  </button>
+</li>
       </ul>
 
       <div class="auth-buttons">
-        <!-- Si hay sesión: mostrar perfil del usuario -->
         <?php if ($isLoggedIn): ?>
           <div class="dropdown">
             <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Perfil">
@@ -68,17 +75,11 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
               <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
             </ul>
           </div>
-        <!-- Si NO hay sesión: mostrar botón de login -->
         <?php else: ?>
           <button class="btn-login" data-bs-toggle="modal" data-bs-target="#authModal" aria-label="Ingresar">
             <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
           </button>
         <?php endif; ?>
-
-        <!-- Botón tema oscuro -->
-        <button class="toggle-btn" id="toggle-mode" aria-label="Cambiar modo">
-          <i class="fas fa-moon"></i>
-        </button>
       </div>
     </div>
   </nav>
@@ -96,20 +97,19 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
         <div class="modal-body">
           <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-panel" type="button" role="tab" aria-controls="login-panel" aria-selected="true">
+              <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-panel" type="button" role="tab">
                 <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-panel" type="button" role="tab" aria-controls="register-panel" aria-selected="false">
+              <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-panel" type="button" role="tab">
                 <i class="fas fa-user-plus"></i> Registrarse
               </button>
             </li>
           </ul>
 
           <div class="tab-content mt-4">
-            <!-- Panel de Login -->
-            <div class="tab-pane fade show active" id="login-panel" role="tabpanel" aria-labelledby="login-tab">
+            <div class="tab-pane fade show active" id="login-panel" role="tabpanel">
               <form id="login-form" action="/login" method="POST">
                 <div class="mb-3">
                   <label for="correo-login" class="form-label">Correo electrónico</label>
@@ -127,8 +127,7 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
               </form>
             </div>
 
-            <!-- Panel de Registro -->
-            <div class="tab-pane fade" id="register-panel" role="tabpanel" aria-labelledby="register-tab">
+            <div class="tab-pane fade" id="register-panel" role="tabpanel">
               <form id="register-form" action="/register" method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
                   <label for="nombreCom" class="form-label">Nombre completo</label>
@@ -182,27 +181,6 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <script>
-    // Toggle del menú móvil
-    const menuToggle = document.getElementById('menu-toggle');
-    const navbarMenu = document.getElementById('navbar-menu');
-
-    if (menuToggle) {
-      menuToggle.addEventListener('click', () => {
-        navbarMenu.classList.toggle('active');
-      });
-    }
-
-    // Cerrar menú al hacer click en un link
-    document.querySelectorAll('.navbar a').forEach(link => {
-      link.addEventListener('click', () => {
-        navbarMenu.classList.remove('active');
-      });
-    });
-
-  </script>
-
-  <script src="/js/script.js"></script>
+  <script src="/js/script.js?v=1.0.3"></script>
 </body>
 </html>

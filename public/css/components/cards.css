@@ -40,7 +40,7 @@
   transition: color var(--transition-normal);
 }
 
-body.dark-mode .caracteristica i {
+html.dark-mode .caracteristica i {
   color: var(--text);
 }
 
@@ -51,7 +51,7 @@ body.dark-mode .caracteristica i {
   transition: color var(--transition-normal);
 }
 
-body.dark-mode .caracteristica h3 {
+html.dark-mode .caracteristica h3 {
   color: var(--text);
 }
 

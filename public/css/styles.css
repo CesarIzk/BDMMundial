@@ -31,32 +31,32 @@
 /* ===== ESTILOS ADICIONALES PARA MODO OSCURO ===== */
 
 /* Ajustes de tema oscuro globales */
-body.dark-mode .formulario {
+html.dark-mode .formulario {
   background: var(--card);
   border-color: var(--border);
 }
 
-body.dark-mode .formulario h3 i {
+html.dark-mode .formulario h3 i {
   color: var(--text);
 }
 
-body.dark-mode footer h4 {
+html.dark-mode footer h4 {
   color: var(--text);
 }
 
-body.dark-mode footer ul a {
+html.dark-mode footer ul a {
   color: var(--text);
 }
 
-body.dark-mode footer ul a:hover {
+html.dark-mode footer ul a:hover {
   color: var(--btn-hover);
 }
 
-body.dark-mode .redes-sociales a {
+html.dark-mode .redes-sociales a {
   color: var(--text);
 }
 
-body.dark-mode .redes-sociales a:hover {
+html.dark-mode .redes-sociales a:hover {
   background: var(--btn);
 }
 
