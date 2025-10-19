@@ -10,15 +10,19 @@ nav {
   z-index: 99;
   border-bottom: 1px solid var(--border);
   transition: background var(--transition-normal), border-color var(--transition-normal);
+  width: 100%;
 }
 
 .nav-wrap {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
   padding: 0 var(--spacing-lg);
   min-height: 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 90%;
 }
 
 /* ===== LISTA DE NAVEGACIÓN ===== */

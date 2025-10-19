@@ -31,6 +31,9 @@
   padding: var(--spacing-4xl) var(--spacing-lg);
   background: var(--surface);
   transition: background var(--transition-normal);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 90%;
 }
 
 /* ===== PRODUCTO CARD ===== */
@@ -58,7 +61,7 @@
 .producto-imagen {
   position: relative;
   width: 100%;
-  padding-top: 100%; /* 1:1 */
+  height: 200px;
   overflow: hidden;
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-lg);
@@ -74,10 +77,6 @@
   object-fit: cover;
   border-radius: var(--radius-lg);
   transition: transform var(--transition-normal);
-}
-
-.producto:hover img {
-  transform: scale(1.05);
 }
 
 .producto h3 {
@@ -198,6 +197,10 @@
     padding: var(--spacing-md);
   }
 
+  .producto-imagen {
+    height: 180px;
+  }
+
   .producto h3 {
     font-size: 1.1rem;
   }
@@ -224,6 +227,11 @@
   .productos {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     padding: var(--spacing-2xl) var(--spacing-md);
+    width: 95%;
+  }
+
+  .producto-imagen {
+    height: 160px;
   }
 
   .producto-footer {
@@ -264,6 +272,7 @@
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: var(--spacing-sm);
     padding: var(--spacing-lg) var(--spacing-sm);
+    width: 100%;
   }
 
   .producto {
@@ -271,6 +280,7 @@
   }
 
   .producto-imagen {
+    height: 140px;
     margin-bottom: var(--spacing-md);
   }
 
