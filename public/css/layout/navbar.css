@@ -1,5 +1,5 @@
 /* =======================
-   NAVBAR Y MENÚ (Versión corregida)
+   NAVBAR Y MENÚ
    ======================= */
 
 nav {
@@ -35,8 +35,6 @@ nav {
   flex: 1;
   margin: 0;
   padding: 0;
-  /* --- ¡AQUÍ ESTÁ EL ARREGLO DEL ESPACIO! --- */
-  justify-content: space-between;
 }
 
 .navbar li {
@@ -58,7 +56,7 @@ nav {
 }
 
 .navbar li a i {
-  font-size: 18px; /* <-- Tu regla para mostrar iconos */
+  display: none;
 }
 
 .navbar li a span {
@@ -71,7 +69,7 @@ nav {
   color: var(--btn-hover);
 }
 
-html.dark-mode .navbar li a:hover {
+body.dark-mode .navbar li a:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -83,9 +81,6 @@ html.dark-mode .navbar li a:hover {
   align-items: center;
   margin-left: auto;
 }
-
-/* (El resto de tus estilos .user-profile, .btn-login, etc. están perfectos) */
-/* ... (pego el resto de tu archivo sin cambios) ... */
 
 /* Perfil del usuario */
 .user-profile {
@@ -110,11 +105,11 @@ html.dark-mode .navbar li a:hover {
   box-shadow: var(--shadow-md);
 }
 
-html.dark-mode .user-profile {
+body.dark-mode .user-profile {
   background: rgba(255, 255, 255, 0.05);
 }
 
-html.dark-mode .user-profile:hover {
+body.dark-mode .user-profile:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -196,10 +191,6 @@ html.dark-mode .user-profile:hover {
     width: 100%;
     box-shadow: var(--shadow-lg);
     z-index: 98;
-    /* --- ¡ARREGLO! --- 
-       Quité el justify-content: space-between 
-       de aquí para que funcione en modo columna.
-    */
   }
 
   .navbar.active {
@@ -219,7 +210,7 @@ html.dark-mode .user-profile:hover {
     border-left-color: var(--btn);
   }
 
-  html.dark-mode .navbar li a:hover {
+  body.dark-mode .navbar li a:hover {
     background: rgba(255, 255, 255, 0.05);
   }
 
@@ -279,22 +270,23 @@ html.dark-mode .user-profile:hover {
     gap: var(--spacing-sm);
   }
 
-  /* --- ¡AQUÍ ESTÁ EL ARREGLO DE ICONOS MÓVIL! --- */
-  .navbar li a {
-    padding: var(--spacing-md) 8px; /* Padding ajustado del archivo original */
-    font-size: var(--text-sm);     /* Tamaño de fuente ajustado */
-    justify-content: center; /* Centra el icono */
+  .navbar {
+    flex-wrap: wrap;
   }
-  
-  .navbar li a span {
-    display: none; /* Oculta el texto en móvil */
+
+  .navbar li a {
+    padding: var(--spacing-md) 8px;
+    font-size: var(--text-sm);
   }
 
   .navbar li a i {
-    font-size: 16px; /* Muestra el icono en móvil */
-    margin-right: 0; /* Quita el margen extra */
+    display: inline;
+    font-size: 16px;
   }
-  /* --- FIN DEL ARREGLO MÓVIL --- */
+
+  .navbar li a span {
+    display: none;
+  }
 
   .btn-login span {
     display: inline;
@@ -340,24 +332,24 @@ html.dark-mode .user-profile:hover {
     gap: var(--spacing-xs);
   }
 
-  /* --- ¡AQUÍ ESTÁ EL ARREGLO DE ICONOS MÓVIL! --- */
-  /* (Mismas reglas que el bloque de 768px) */
+  .navbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
   .navbar li a {
     padding: var(--spacing-sm) 6px;
     font-size: var(--text-sm);
-    justify-content: center;
+  }
+
+  .navbar li a i {
+    display: inline;
+    font-size: 14px;
   }
 
   .navbar li a span {
     display: none;
   }
-
-  .navbar li a i {
-    font-size: 14px;
-    margin-right: 0;
-  }
-  /* --- FIN DEL ARREGLO MÓVIL --- */
-
 
   .btn-login span {
     display: none;
@@ -366,6 +358,10 @@ html.dark-mode .user-profile:hover {
   .btn-login {
     padding: var(--spacing-sm) 8px;
     font-size: 12px;
+  }
+
+  .btn-login i {
+    font-size: 14px;
   }
 
   .user-profile span {
