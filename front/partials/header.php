@@ -36,7 +36,7 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
 
   <!-- Navbar -->
   <nav>
-    <div class="nav-wrap contenedor">
+    <div class="nav-wrap">
       <button class="menu-toggle" id="menu-toggle" aria-label="Menú">
         <i class="fas fa-bars"></i>
       </button>
