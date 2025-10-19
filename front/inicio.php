@@ -1,5 +1,5 @@
 <?php require 'partials/header.php'; ?> 
-<?php require 'partials/navbar.php'; ?>
+
 
   <section class="hero">
     <div class="hero-contenido">

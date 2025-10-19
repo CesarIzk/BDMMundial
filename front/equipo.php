@@ -2,7 +2,7 @@
 // equipos.php
 ?>
 <?php require 'partials/header.php'; ?>
-<?php require 'partials/navbar.php'; ?>
+
 
 <section class="hero" style="background-image: url('/imagenes/equipos.jpg');">
   <div class="hero-contenido">

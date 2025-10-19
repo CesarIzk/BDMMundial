@@ -1,5 +1,5 @@
 <?php require 'partials/header.php'; ?>
-<?php require 'partials/navbar.php'; ?>
+
 
 <div class="contenedor contenido-principal">
     <h2 class="titulo-seccion">Publicaciones Destacadas</h2>

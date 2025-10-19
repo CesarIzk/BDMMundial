@@ -1,5 +1,5 @@
 <?php require 'partials/header.php'; ?>
-<?php require 'partials/navbar.php'; ?>
+
 
 <div class="contenedor">
   <h2 class="titulo-seccion">Artículos Disponibles</h2>
