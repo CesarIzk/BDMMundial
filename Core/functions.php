@@ -11,7 +11,6 @@ function dd($var)
     die();
 }
 
-
 function isUri($route)
 {
     return $_SERVER['REQUEST_URI'] === $route ? 'bg-gray-900 text-white ' : 'text-gray-300 hover:bg-gray-700 hover:text-white ';
@@ -33,14 +32,25 @@ function authorize($condition, $status = Response::FORBIDDEN)
     }
 }
 
-
 function base_path($path): string
 {
     return BASE_PATH . $path;
 }
 
-function view($path,$attributes = [])
+function view($path, $attributes = [])
 {
     extract($attributes);
     require base_path('front/') . $path;
+}
+
+function redirect($path)
+{
+    // Evitar errores si ya se enviaron headers
+    if (!headers_sent()) {
+        header("Location: $path");
+        exit;
+    } else {
+        echo "<script>window.location.href = '$path';</script>";
+        exit;
+    }
 }

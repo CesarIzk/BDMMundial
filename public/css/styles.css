@@ -25,7 +25,7 @@
 @import url('sections/caracteristicas.css');
 @import url('sections/productos.css');
 @import url('sections/posts.css');
-
+@import url('sections/stats.css');
 /* ===== UTILITIES ===== */
 @import url('utils/animations.css');
 @import url('utils/slider.css');
