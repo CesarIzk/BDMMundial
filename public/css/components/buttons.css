@@ -146,3 +146,56 @@ button:disabled:hover {
     width: 24px;
   }
 }
+
+/* Publicaciones*/
+/* Botón de crear publicación */
+.btn-crear-post {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-right: 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-crear-post:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-crear-post i {
+  font-size: 1.1rem;
+}
+
+/* Dark mode */
+body.dark-mode .btn-crear-post {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+body.dark-mode .btn-crear-post:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-crear-post span {
+    display: none;
+  }
+  
+  .btn-crear-post {
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    margin-right: 0.5rem;
+  }
+}

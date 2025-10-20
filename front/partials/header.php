@@ -1,9 +1,12 @@
 <?php
 // front/partials/header.php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $isLoggedIn = isset($_SESSION['user']);
 $user = $isLoggedIn ? $_SESSION['user'] : null;
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,12 +14,10 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MundialFan - Todo sobre el Mundial de Fútbol</title>
 
-
-
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="/css/styles.css?v=1.0.12">
+  <link rel="stylesheet" href="/css/styles.css?v=1.0.13">
 </head>
 
 <body>
@@ -29,59 +30,56 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </div>
   </header>
 
-<nav>
-  <div class="nav-wrap">
-    <!-- Botón Hamburguesa -->
-    <button class="menu-toggle" aria-label="Menú">
-      <i class="fas fa-bars"></i>
-    </button>
-
-    <ul class="navbar" id="navbar-menu">
-      <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-      <li><a href="/campeonatos"><i class="fas fa-trophy"></i> <span>Campeonatos</span></a></li>
-      <li><a href="/equipos"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
-      <li><a href="/Post"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
-      <li><a href="/stats"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
-      <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
-    </ul>
-
-    <div class="auth-buttons">
-      <!-- BOTÓN CREAR PUBLICACIÓN (solo si está logueado) -->
-      <?php if ($isLoggedIn): ?>
-        <a href="/Post/crear" class="btn-crear-post" title="Nueva Publicación">
-          <i class="fas fa-plus-circle"></i> <span>Publicar</span>
-        </a>
-      <?php endif; ?>
-
-      <!-- TOGGLE DE DARK MODE -->
-      <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
-        <i class="fas fa-moon"></i>
+  <nav>
+    <div class="nav-wrap">
+      <button class="menu-toggle" aria-label="Menú">
+        <i class="fas fa-bars"></i>
       </button>
 
-      <?php if ($isLoggedIn): ?>
-        <div class="dropdown">
-          <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Perfil">
-            <div class="user-avatar">
-              <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
-            </div>
-            <span><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
-            <i class="fas fa-chevron-down"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user"></i> Mi Perfil</a></li>
-            <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
-          </ul>
-        </div>
-      <?php else: ?>
-        <button class="btn-login" data-bs-toggle="modal" data-bs-target="#authModal" aria-label="Ingresar">
-          <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
+      <ul class="navbar" id="navbar-menu">
+        <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+        <li><a href="/campeonatos"><i class="fas fa-trophy"></i> <span>Campeonatos</span></a></li>
+        <li><a href="/equipos"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
+        <li><a href="/Post"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
+        <li><a href="/stats"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
+        <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
+      </ul>
+
+      <div class="auth-buttons">
+        <?php if ($isLoggedIn): ?>
+          <a href="/Post/crear" class="btn-crear-post" title="Nueva Publicación">
+            <i class="fas fa-plus-circle"></i> <span>Publicar</span>
+          </a>
+        <?php endif; ?>
+
+        <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
+          <i class="fas fa-moon"></i>
         </button>
-      <?php endif; ?>
+
+        <?php if ($isLoggedIn): ?>
+          <div class="dropdown">
+            <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <div class="user-avatar">
+                <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
+              </div>
+              <span><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user"></i> Mi Perfil</a></li>
+              <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+            </ul>
+          </div>
+        <?php else: ?>
+          <button class="btn-login" data-bs-toggle="modal" data-bs-target="#authModal">
+            <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
+          </button>
+        <?php endif; ?>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
   <!-- Modal de Autenticación -->
   <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
@@ -93,7 +91,26 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
+        
         <div class="modal-body">
+          <!-- Mensajes de Error/Éxito -->
+          <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($_SESSION['error']); ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <?php unset($_SESSION['error']); ?>
+          <?php endif; ?>
+
+          <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($_SESSION['success']); ?>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <?php unset($_SESSION['success']); ?>
+          <?php endif; ?>
+
+          <!-- Tabs -->
           <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item" role="presentation">
               <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-panel" type="button" role="tab">
@@ -107,7 +124,9 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
             </li>
           </ul>
 
+          <!-- Tab Content -->
           <div class="tab-content mt-4">
+            <!-- Login Panel -->
             <div class="tab-pane fade show active" id="login-panel" role="tabpanel">
               <form id="login-form" action="/login" method="POST">
                 <div class="mb-3">
@@ -126,8 +145,9 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
               </form>
             </div>
 
+            <!-- Register Panel -->
             <div class="tab-pane fade" id="register-panel" role="tabpanel">
-              <form id="register-form" action="/register" method="POST" enctype="multipart/form-data">
+              <form id="register-form" action="/register" method="POST">
                 <div class="mb-3">
                   <label for="nombreCom" class="form-label">Nombre completo</label>
                   <input type="text" class="form-control" id="nombreCom" name="nombreCom" placeholder="Tu nombre" required>
@@ -163,26 +183,40 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </div>
   </div>
 
-  <!-- Modal de Mensajes -->
-  <div class="modal fade" id="mensajeModal" tabindex="-1" aria-labelledby="mensajeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="mensajeModalLabel">Mensaje</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body" id="mensajeModalBody"></div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/script.js"></script>
+  <script src="/js/dark-mode.js"></script>
+  <script src="/js/navbar-mobile.js"></script>
   
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/script.js"></script>
-<script src="/js/dark-mode.js"></script>
-<script src="/js/navbar-mobile.js"></script>  <!-- Nueva línea -->
+  <script>
+  // Abrir modal automáticamente si hay error/success
+  document.addEventListener('DOMContentLoaded', function() {
+    <?php if (isset($_SESSION['error']) || isset($_SESSION['success'])): ?>
+      var authModal = new bootstrap.Modal(document.getElementById('authModal'));
+      authModal.show();
+    <?php endif; ?>
 
+    // Validación del formulario de registro
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+      registerForm.addEventListener('submit', function(e) {
+        const pass1 = document.getElementById('contrasena-reg').value;
+        const pass2 = document.getElementById('contrasena2').value;
+        
+        if (pass1 !== pass2) {
+          e.preventDefault();
+          alert('Las contraseñas no coinciden');
+          return false;
+        }
+        
+        if (pass1.length < 4) {
+          e.preventDefault();
+          alert('La contraseña debe tener al menos 4 caracteres');
+          return false;
+        }
+      });
+    }
+  });
+  </script>
 </body>
 </html>

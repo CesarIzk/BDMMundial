@@ -171,8 +171,11 @@ class AuthController
      */
     private function redirectWithError($message)
     {
-        session_start();
+        if (!isset($_SESSION)) {
+            session_start();
+        }
         $_SESSION['error'] = $message;
-        return redirect('/#authModal');
+        header('Location: /#authModal');
+        exit;
     }
 }

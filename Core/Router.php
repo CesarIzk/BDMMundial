@@ -60,36 +60,51 @@ class Router
         return $this;
     }
 
-    public function route($uri, $method)
-    {
-        foreach ($this->routes as $route) {
-            if ($route['uri'] === $uri && $route['method'] === strtoupper($method)) {
-                Middleware::resolve($route['middleware']);
-    
-                // Verificar si el controlador tiene formato tipo 'Archivo@metodo'
-                if (str_contains($route['controles'], '@')) {
-                    [$controllerPath, $methodName] = explode('@', $route['controles']);
-    
-                    $controllerFile = base_path($controllerPath . '.php');
-                    if (!file_exists($controllerFile)) {
-                        $this->abort(500); // Vista 500 personalizada
-                    }
-    
-                    require_once $controllerFile;
-    
-                    $controllerClass = $this->convertToNamespace($controllerPath);
-                    $controller = new $controllerClass;
-                    return $controller->$methodName();
-                } else {
-                    // Es solo un archivo PHP de vista u otro
-                    return require base_path($route['controles']);
+   public function route($uri, $method)
+{
+    foreach ($this->routes as $route) {
+        if ($route['uri'] === $uri && $route['method'] === strtoupper($method)) {
+            Middleware::resolve($route['middleware']);
+
+            // Verificar si el controlador tiene formato tipo 'Clase@metodo'
+            if (str_contains($route['controles'], '@')) {
+                [$controllerPath, $methodName] = explode('@', $route['controles']);
+
+                // Convertir ruta a namespace (controles/Api/AuthController → Controles\Api\AuthController)
+                $controllerClass = $this->pathToNamespace($controllerPath);
+                
+                // Verificar que la clase exista
+                if (!class_exists($controllerClass)) {
+                    $this->abort(500);
                 }
+
+                $controller = new $controllerClass;
+                return $controller->$methodName();
+            } else {
+                // Es solo un archivo PHP de vista
+                return require base_path($route['controles']);
             }
         }
-    
-        $this->abort();
     }
+
+    $this->abort();
+}
+
+/**
+ * Convierte ruta de archivo a namespace de clase
+ * Ej: controles/Api/AuthController → Controles\Api\AuthController
+ */
+protected function pathToNamespace($path)
+{
+    // Eliminar extensión .php si existe
+    $path = str_replace('.php', '', $path);
     
+    // Convertir primera letra de cada segmento a mayúscula
+    $parts = explode('/', $path);
+    $parts = array_map('ucfirst', $parts);
+    
+    return implode('\\', $parts);
+}
     
 
 
