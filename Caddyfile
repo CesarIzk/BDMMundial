@@ -2,8 +2,8 @@
     # 1. Apunta la raíz a tu subdirectorio 'public'
     root * /app/public
 
-    # 2. Configura PHP-FPM para usar el socket estándar
-    php_fastcgi unix//var/run/php/php-fpm.sock
+    # 2. Configura PHP-FPM para usar el socket de /tmp
+    php_fastcgi unix//tmp/php-fpm.sock
 
     # 3. Sirve archivos estáticos (CSS, JS, imágenes)
     file_server
