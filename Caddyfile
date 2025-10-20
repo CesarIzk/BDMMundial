@@ -1,0 +1,15 @@
+{
+    # Asegura que PHP maneje las rutas antes que el servidor de archivos
+    order php_handler before file_server
+}
+
+:8080 {
+    # 1. Apunta la raíz a tu subdirectorio 'public'
+    root * /app/public
+
+    # 2. Habilita el manejador de PHP (FrankenPHP)
+    php_handler
+
+    # 3. Sirve archivos estáticos (CSS, JS, imágenes)
+    file_server
+}
