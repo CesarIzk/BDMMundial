@@ -46,6 +46,13 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </ul>
 
     <div class="auth-buttons">
+      <!-- BOTÓN CREAR PUBLICACIÓN (solo si está logueado) -->
+      <?php if ($isLoggedIn): ?>
+        <a href="/Post/crear" class="btn-crear-post" title="Nueva Publicación">
+          <i class="fas fa-plus-circle"></i> <span>Publicar</span>
+        </a>
+      <?php endif; ?>
+
       <!-- TOGGLE DE DARK MODE -->
       <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
         <i class="fas fa-moon"></i>

@@ -15,3 +15,6 @@ $router->get('/equipos', 'controls/equipos.php');
 $router->get('/campeonatos', 'controls/campeonatos.php');
 $router->get('/tienda', 'controls/tienda.php');
 $router->get('/stats', 'controls/stats.php');
+
+$router->get('/Post/crear', 'controls/CrearPublicacion.php');
+$router->post('/Post/store', 'controles/Api/PostController.php@store');
