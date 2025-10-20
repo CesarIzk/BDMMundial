@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Controllers;
+namespace Controles\Api;
 
-use Core\Database;
+use Core\App;
 
 class AuthController
 {
@@ -10,7 +10,7 @@ class AuthController
 
     public function __construct()
     {
-        $this->db = app(Database::class);
+        $this->db = App::resolve('Core\Database');
     }
 
     /**
@@ -152,7 +152,7 @@ class AuthController
 
             return redirect('/');
         } catch (\Exception $e) {
-            return $this->redirectWithError('Error al registrar el usuario: ' . $e->getMessage());
+            return $this->redirectWithError('Error al registrar el usuario');
         }
     }
 
