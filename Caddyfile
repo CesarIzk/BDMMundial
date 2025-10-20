@@ -1,14 +1,11 @@
-{
-    # Asegura que PHP maneje las rutas antes que el servidor de archivos
-    order php_handler before file_server
-}
-
 :8080 {
     # 1. Apunta la raíz a tu subdirectorio 'public'
     root * /app/public
 
-    # 2. Habilita el manejador de PHP (FrankenPHP)
-    php_handler
+    # 2. Configura PHP-FPM (el estándar)
+    # Esto también maneja las reescrituras (rewrites)
+    # para tu router (index.php) automáticamente.
+    php_fastcgi 127.0.0.1:9000
 
     # 3. Sirve archivos estáticos (CSS, JS, imágenes)
     file_server
