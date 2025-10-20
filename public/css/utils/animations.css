@@ -302,12 +302,12 @@
 }
 
 /* Cuando hay modo oscuro, invertimos la animación */
-html.dark-mode .theme-toggle .sun {
+body.dark-mode .theme-toggle .sun {
   opacity: 0;
   transform: rotate(-90deg);
 }
 
-html.dark-mode .theme-toggle .moon {
+body.dark-mode .theme-toggle .moon {
   opacity: 1;
   transform: rotate(0deg);
 }

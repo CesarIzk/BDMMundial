@@ -21,7 +21,7 @@
   transition: color var(--transition-normal);
 }
 
-html.dark-mode .titulo-seccion {
+body.dark-mode .titulo-seccion {
   color: var(--text);
 }
 
@@ -58,7 +58,7 @@ html.dark-mode .titulo-seccion {
   transition: all var(--transition-normal);
 }
 
-html.dark-mode .caracteristica i {
+body.dark-mode .caracteristica i {
   color: var(--text);
 }
 
@@ -74,7 +74,7 @@ html.dark-mode .caracteristica i {
   transition: color var(--transition-normal);
 }
 
-html.dark-mode .caracteristica h3 {
+body.dark-mode .caracteristica h3 {
   color: var(--text);
 }
 

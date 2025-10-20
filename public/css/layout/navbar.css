@@ -1,5 +1,5 @@
 /* =======================
-   NAVBAR Y MENÚ
+   NAVBAR Y MENÚ (Versión corregida)
    ======================= */
 
 nav {
@@ -35,6 +35,8 @@ nav {
   flex: 1;
   margin: 0;
   padding: 0;
+  /* --- ¡AQUÍ ESTÁ EL ARREGLO DEL ESPACIO! --- */
+  justify-content: space-between;
 }
 
 .navbar li {
@@ -56,7 +58,7 @@ nav {
 }
 
 .navbar li a i {
-  display: none;
+  font-size: 18px; /* <-- Tu regla para mostrar iconos */
 }
 
 .navbar li a span {
@@ -81,6 +83,9 @@ body.dark-mode .navbar li a:hover {
   align-items: center;
   margin-left: auto;
 }
+
+/* (El resto de tus estilos .user-profile, .btn-login, etc. están perfectos) */
+/* ... (pego el resto de tu archivo sin cambios) ... */
 
 /* Perfil del usuario */
 .user-profile {
@@ -166,6 +171,7 @@ body.dark-mode .user-profile:hover {
   color: var(--btn);
 }
 
+
 /* Menú hamburguesa (oculto en desktop) */
 .menu-toggle {
   display: none;
@@ -191,6 +197,10 @@ body.dark-mode .user-profile:hover {
     width: 100%;
     box-shadow: var(--shadow-lg);
     z-index: 98;
+    /* --- ¡ARREGLO! --- 
+       Quité el justify-content: space-between 
+       de aquí para que funcione en modo columna.
+    */
   }
 
   .navbar.active {
@@ -258,35 +268,29 @@ body.dark-mode .user-profile:hover {
 }
 
 /* ===== RESPONSIVE - MOBILE (768px y menor) ===== */
-
 @media (max-width: 768px) {
-  nav {
-    top: 50px;
-  }
-
-  .nav-wrap {
-    width: 100%;
-    padding: 0 var(--spacing-md);
-    gap: var(--spacing-sm);
-  }
-
   .navbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
   }
 
   .navbar li a {
-    padding: var(--spacing-md) 8px;
+    padding: var(--spacing-md) 10px;
     font-size: var(--text-sm);
-  }
-
-  .navbar li a i {
-    display: inline;
-    font-size: 16px;
+    flex-shrink: 0;
   }
 
   .navbar li a span {
-    display: none;
+    display: inline;
+    margin-left: 4px;
   }
+
+  .navbar li a i {
+    font-size: 16px;
+  }
+}
+  /* --- FIN DEL ARREGLO MÓVIL --- */
 
   .btn-login span {
     display: inline;
@@ -317,7 +321,7 @@ body.dark-mode .user-profile:hover {
     font-size: 16px;
     padding: var(--spacing-xs);
   }
-}
+
 
 /* ===== RESPONSIVE - PEQUEÑO MOBILE (576px y menor) ===== */
 
@@ -332,24 +336,24 @@ body.dark-mode .user-profile:hover {
     gap: var(--spacing-xs);
   }
 
-  .navbar {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-
+  /* --- ¡AQUÍ ESTÁ EL ARREGLO DE ICONOS MÓVIL! --- */
+  /* (Mismas reglas que el bloque de 768px) */
   .navbar li a {
     padding: var(--spacing-sm) 6px;
     font-size: var(--text-sm);
-  }
-
-  .navbar li a i {
-    display: inline;
-    font-size: 14px;
+    justify-content: center;
   }
 
   .navbar li a span {
     display: none;
   }
+
+  .navbar li a i {
+    font-size: 14px;
+    margin-right: 0;
+  }
+  /* --- FIN DEL ARREGLO MÓVIL --- */
+
 
   .btn-login span {
     display: none;
@@ -358,10 +362,6 @@ body.dark-mode .user-profile:hover {
   .btn-login {
     padding: var(--spacing-sm) 8px;
     font-size: 12px;
-  }
-
-  .btn-login i {
-    font-size: 14px;
   }
 
   .user-profile span {
@@ -387,4 +387,15 @@ body.dark-mode .user-profile:hover {
     font-size: 14px;
     padding: var(--spacing-xs);
   }
+  
+}
+/* ===== FIN DE RESPONSIVE / PEQUEÑO MOBILE ===== */
+
+/* ===== TOGGLE DARK MODE ICON COLOR ===== */
+body.dark-mode .toggle-btn i {
+  color: var(--btn);
+}
+
+body:not(.dark-mode) .toggle-btn i {
+  color: var(--text);
 }

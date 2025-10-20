@@ -1,10 +1,12 @@
 /* =======================
-   MAIN.CSS - Importa todos los estilos
+   STYLES.CSS - Importa todos los estilos
    ======================= */
 
 /* ===== BASE ===== */
 @import url('base/variables.css');
 @import url('base/reset.css');
+
+
 
 /* ===== LAYOUT ===== */
 @import url('layout/container.css');
@@ -31,33 +33,36 @@
 /* ===== ESTILOS ADICIONALES PARA MODO OSCURO ===== */
 
 /* Ajustes de tema oscuro globales */
-html.dark-mode .formulario {
+body.dark-mode .formulario {
   background: var(--card);
   border-color: var(--border);
 }
 
-html.dark-mode .formulario h3 i {
+body.dark-mode .formulario h3 i {
   color: var(--text);
 }
 
-html.dark-mode footer h4 {
+body.dark-mode footer h4 {
   color: var(--text);
 }
 
-html.dark-mode footer ul a {
+body.dark-mode footer ul a {
   color: var(--text);
 }
 
-html.dark-mode footer ul a:hover {
+body.dark-mode footer ul a:hover {
   color: var(--btn-hover);
 }
 
-html.dark-mode .redes-sociales a {
+body.dark-mode .redes-sociales a {
   color: var(--text);
 }
 
-html.dark-mode .redes-sociales a:hover {
+body.dark-mode .redes-sociales a:hover {
   background: var(--btn);
+}
+body.dark-mode .toggle-btn {
+  color: var(--btn); /* o el color que quieras en modo oscuro */
 }
 
 /* ===== UTILIDADES GENERALES ===== */
@@ -243,4 +248,19 @@ html.dark-mode .redes-sociales a:hover {
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
+}
+
+/* ===== TOGGLE DARK MODE ICON COLOR ===== */
+nav .nav-wrap .toggle-btn i {
+  transition: color var(--transition-normal);
+  color: var(--text);
+}
+
+body.dark-mode nav .nav-wrap .toggle-btn i {
+  color: var(--btn) !important;
+}
+
+/* Modo claro */
+body:not(.dark-mode) .toggle-btn i {
+  color: var(--text) !important;
 }

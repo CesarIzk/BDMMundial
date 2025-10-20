@@ -21,7 +21,7 @@ footer {
   transition: color var(--transition-normal);
 }
 
-html.dark-mode .footer-seccion h4 {
+body.dark-mode .footer-seccion h4 {
   color: var(--text);
 }
 
@@ -35,7 +35,7 @@ html.dark-mode .footer-seccion h4 {
   margin-right: var(--spacing-sm);
 }
 
-html.dark-mode .footer-seccion i {
+body.dark-mode .footer-seccion i {
   color: var(--text);
 }
 
@@ -62,11 +62,11 @@ html.dark-mode .footer-seccion i {
   color: var(--btn-hover);
 }
 
-html.dark-mode .footer-seccion ul a {
+body.dark-mode .footer-seccion ul a {
   color: var(--text);
 }
 
-html.dark-mode .footer-seccion ul a:hover {
+body.dark-mode .footer-seccion ul a:hover {
   color: var(--btn-hover);
 }
 
@@ -96,12 +96,12 @@ html.dark-mode .footer-seccion ul a:hover {
   transform: translateY(-2px);
 }
 
-html.dark-mode .redes-sociales a {
+body.dark-mode .redes-sociales a {
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
 }
 
-html.dark-mode .redes-sociales a:hover {
+body.dark-mode .redes-sociales a:hover {
   background: var(--btn);
 }
 

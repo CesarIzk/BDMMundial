@@ -11,13 +11,7 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MundialFan - Todo sobre el Mundial de Fútbol</title>
 
-  <!-- Aplicar tema guardado antes de CSS -->
-  <script>
-    const savedTheme = localStorage.getItem('theme');
-    if(savedTheme === 'dark') {
-      document.documentElement.classList.add('dark-mode');
-    }
-  </script>
+
 
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -35,54 +29,48 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </div>
   </header>
 
-  <nav>
-    <div class="nav-wrap">
-      <button class="menu-toggle" id="menu-toggle" aria-label="Menú">
-        <i class="fas fa-bars"></i>
-      </button>
+<nav>
+  <div class="nav-wrap">
+  <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
+  <i class="fas fa-moon"></i>
+</button>
 
-      <ul class="navbar" id="navbar-menu">
-        <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-        <li><a href="/campeonatos"><i class="fas fa-trophy"></i> <span>Campeonatos</span></a></li>
-        <li><a href="/equipos"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
-        <li><a href="/Post"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
-        <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
-        <li><a href="/contacto"><i class="fas fa-envelope"></i> <span>Contacto</span></a></li>
+    <ul class="navbar" id="navbar-menu">
+      <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+      <li><a href="/campeonatos"><i class="fas fa-trophy"></i> <span>Campeonatos</span></a></li>
+      <li><a href="/equipos"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
+      <li><a href="/Post"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
+      <li><a href="/stats"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
+      <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
+    </ul>
 
-        <!-- Botón de tema oscuro integrado en el navbar -->
-   <!-- Botón de modo oscuro integrado en el navbar -->
-<li>
-  <button id="toggle-mode" class="toggle-btn" aria-label="Cambiar modo">
-    <i class="fas fa-moon"></i>
-  </button>
-</li>
-      </ul>
-
-      <div class="auth-buttons">
-        <?php if ($isLoggedIn): ?>
-          <div class="dropdown">
-            <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Perfil">
-              <div class="user-avatar">
-                <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
-              </div>
-              <span><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user"></i> Mi Perfil</a></li>
-              <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
-            </ul>
-          </div>
-        <?php else: ?>
-          <button class="btn-login" data-bs-toggle="modal" data-bs-target="#authModal" aria-label="Ingresar">
-            <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
+    <div class="auth-buttons">
+      <?php if ($isLoggedIn): ?>
+        <div class="dropdown">
+          <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Perfil">
+            <div class="user-avatar">
+              <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
+            </div>
+            <span><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
+            <i class="fas fa-chevron-down"></i>
           </button>
-        <?php endif; ?>
-      </div>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+          </ul>
+        </div>
+      <?php else: ?>
+        <button class="btn-login" data-bs-toggle="modal" data-bs-target="#authModal" aria-label="Ingresar">
+          <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
+        </button>
+      <?php endif; ?>
+      
+   
     </div>
-  </nav>
+  </div>
+</nav>
 
   <!-- Modal de Autenticación -->
   <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
@@ -179,8 +167,9 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
       </div>
     </div>
   </div>
-
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/script.js?v=1.0.3"></script>
+
+  <script src="/js/script.js"></script>
 </body>
 </html>

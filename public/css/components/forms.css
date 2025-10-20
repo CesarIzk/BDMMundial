@@ -27,7 +27,7 @@
   transition: color var(--transition-normal);
 }
 
-html.dark-mode .formulario h3 {
+body.dark-mode .formulario h3 {
   color: var(--text);
 }
 
@@ -37,7 +37,7 @@ html.dark-mode .formulario h3 {
   transition: color var(--transition-normal);
 }
 
-html.dark-mode .formulario h3 i {
+body.dark-mode .formulario h3 i {
   color: var(--text);
 }
 
@@ -74,22 +74,22 @@ html.dark-mode .formulario h3 i {
   color: #111;
 }
 
-html.dark-mode .formulario input,
-html.dark-mode .formulario select,
-html.dark-mode .formulario textarea {
+body.dark-mode .formulario input,
+body.dark-mode .formulario select,
+body.dark-mode .formulario textarea {
   background: #2a2a2a;
   color: white;
   border-color: var(--border);
 }
 
-html.dark-mode .formulario input::placeholder,
-html.dark-mode .formulario textarea::placeholder {
+body.dark-mode .formulario input::placeholder,
+body.dark-mode .formulario textarea::placeholder {
   color: #999;
 }
 
-html.dark-mode .formulario input:focus,
-html.dark-mode .formulario select:focus,
-html.dark-mode .formulario textarea:focus {
+body.dark-mode .formulario input:focus,
+body.dark-mode .formulario select:focus,
+body.dark-mode .formulario textarea:focus {
   background: #2a2a2a;
   color: white;
   border-color: var(--btn);

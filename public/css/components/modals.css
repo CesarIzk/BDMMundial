@@ -21,7 +21,7 @@
   transition: all var(--transition-normal);
 }
 
-html.dark-mode .modal-content {
+body.dark-mode .modal-content {
   background: var(--surface);
 }
 
@@ -62,7 +62,7 @@ html.dark-mode .modal-content {
   background: var(--surface);
 }
 
-html.dark-mode .modal-body {
+body.dark-mode .modal-body {
   background: var(--surface);
 }
 
@@ -159,8 +159,8 @@ html.dark-mode .modal-body {
   outline: none;
 }
 
-html.dark-mode .modal-body .form-control,
-html.dark-mode .modal-body .form-select {
+body.dark-mode .modal-body .form-control,
+body.dark-mode .modal-body .form-select {
   background: var(--card);
   border-color: var(--border);
   color: var(--text);
@@ -230,7 +230,7 @@ html.dark-mode .modal-body .form-select {
   padding-left: calc(var(--spacing-lg) + 4px);
 }
 
-html.dark-mode .dropdown-item:hover {
+body.dark-mode .dropdown-item:hover {
   background: rgba(176, 0, 0, 0.2);
 }
 
