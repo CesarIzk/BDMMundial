@@ -1,0 +1,19 @@
+# nixpack.toml
+[phases.setup]
+# Instalamos PHP y extensiones necesarias
+nixPkgs = [
+  "php82"
+  "php82Extensions.pdo"
+  "php82Extensions.pdo_mysql"
+  "php82Extensions.mbstring"
+]
+
+[phases.build]
+# Instalamos dependencias de Composer
+cmds = [
+  "composer install --no-dev --optimize-autoloader"
+]
+
+[start]
+# Iniciamos el servidor PHP en el puerto que Railway asigne, apuntando a public/
+cmd = "php -S 0.0.0.0:$PORT -t public"
