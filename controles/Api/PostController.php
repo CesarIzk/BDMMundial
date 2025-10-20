@@ -25,15 +25,16 @@ class PostController
 
         if ($userId) {
             // Publicaciones de un usuario específico
-            $posts = $this->db->query(
-                "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-                 FROM publicaciones p
-                 JOIN users u ON p.idUsuario = u.idUsuario 
-                 WHERE p.idUsuario = ? AND p.estado = 'publico'
-                 ORDER BY p.postdate DESC 
-                 LIMIT ? OFFSET ?",
-                [$userId, $limit, $offset]
-            )->get();
+       // Publicaciones de un usuario específico (línea ~28)
+$posts = $this->db->query(
+    "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
+     FROM publicaciones p
+     JOIN users u ON p.idUsuario = u.idUsuario 
+     WHERE p.idUsuario = ? AND p.estado = 'publico'
+     ORDER BY p.postdate DESC 
+     LIMIT {$limit} OFFSET {$offset}",  // 👈 Sin placeholders
+    [$userId]
+)->get();
 
             $total = $this->db->query(
                 "SELECT COUNT(*) as count FROM publicaciones WHERE idUsuario = ? AND estado = 'publico'",
@@ -41,15 +42,16 @@ class PostController
             )->find()['count'];
         } else {
             // Todas las publicaciones públicas
-            $posts = $this->db->query(
-                "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-                 FROM publicaciones p
-                 JOIN users u ON p.idUsuario = u.idUsuario 
-                 WHERE p.estado = 'publico'
-                 ORDER BY p.postdate DESC 
-                 LIMIT ? OFFSET ?",
-                [$limit, $offset]
-            )->get();
+          // Todas las publicaciones públicas (línea ~42)
+$posts = $this->db->query(
+    "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
+     FROM publicaciones p
+     JOIN users u ON p.idUsuario = u.idUsuario 
+     WHERE p.estado = 'publico'
+     ORDER BY p.postdate DESC 
+     LIMIT {$limit} OFFSET {$offset}",  // 👈 Sin placeholders
+    []
+)->get();
 
             $total = $this->db->query(
                 "SELECT COUNT(*) as count FROM publicaciones WHERE estado = 'publico'"
