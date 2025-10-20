@@ -11,7 +11,7 @@ if ($url === false) {
             'host' => 'localhost',
             'port' => 3306,
             'user' => 'root',
-            'password' => '', // Pon tu contraseña local aquí
+            'password' => 'root', // Pon tu contraseña local aquí
             'dbname' => 'myapp', // Pon el nombre de tu BD local
             'charset' => 'utf8mb4'
         ]
