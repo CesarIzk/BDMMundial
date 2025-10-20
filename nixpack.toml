@@ -1,20 +1,8 @@
-# nixpack.toml
-
 [phases.setup]
-# Instala Caddy, PHP-FPM y las extensiones necesarias
-nixPkgs = [
-    "caddy",
-    "php82",
-    "php82-fpm", 
-    "php82Extensions.pdo",
-    "php82Extensions.pdo_mysql"
-]
-nixpkgsArchive = "aea547d4ec4ac01efe763cde7ccfbb263d5e2b86"
+nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_mysql", "php82Extensions.mbstring"]
 
 [phases.build]
-# Instala las dependencias de Composer
 cmds = ["composer install --no-dev --optimize-autoloader"]
 
-[phases.start]
-# Inicia PHP-FPM en segundo plano, y luego inicia Caddy en primer plano
-cmd = "php-fpm -D && caddy run --config /app/Caddyfile --adapter caddyfile"
+[start]
+cmd = "php -d extension=pdo.so -d extension=pdo_mysql.so -S 0.0.0.0:$PORT -t public"
