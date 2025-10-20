@@ -3,7 +3,6 @@
     root * /app/public
 
     # 2. Configura PHP-FPM para usar el socket estándar
-    # Esta es la ruta de socket más común en entornos de contenedores
     php_fastcgi unix//var/run/php/php-fpm.sock
 
     # 3. Sirve archivos estáticos (CSS, JS, imágenes)

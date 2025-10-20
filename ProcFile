@@ -1,1 +1,1 @@
-web: caddy run --config /Caddyfile --adapter caddyfile
+web: php-fpm -D && caddy run --config /Caddyfile --adapter caddyfile
