@@ -8,7 +8,7 @@ $url = getenv('DATABASE_URL');
 if ($url === false) {
     return [
         'database' => [
-            'host' => 'localhost',
+            'host' => 'root',
             'port' => 3306,
             'user' => 'root',
             'password' => 'root', // Pon tu contraseña local aquí
