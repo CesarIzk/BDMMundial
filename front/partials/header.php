@@ -31,9 +31,10 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
 
 <nav>
   <div class="nav-wrap">
-  <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
-  <i class="fas fa-moon"></i>
-</button>
+    <!-- Botón Hamburguesa -->
+    <button class="menu-toggle" aria-label="Menú">
+      <i class="fas fa-bars"></i>
+    </button>
 
     <ul class="navbar" id="navbar-menu">
       <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
@@ -45,6 +46,11 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </ul>
 
     <div class="auth-buttons">
+      <!-- TOGGLE DE DARK MODE -->
+      <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
+        <i class="fas fa-moon"></i>
+      </button>
+
       <?php if ($isLoggedIn): ?>
         <div class="dropdown">
           <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Perfil">
@@ -66,8 +72,6 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
           <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
         </button>
       <?php endif; ?>
-      
-   
     </div>
   </div>
 </nav>
@@ -168,8 +172,10 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     </div>
   </div>
   
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/script.js"></script>
+<script src="/js/dark-mode.js"></script>
+<script src="/js/navbar-mobile.js"></script>  <!-- Nueva línea -->
 
-  <script src="/js/script.js"></script>
 </body>
 </html>
