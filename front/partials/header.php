@@ -56,27 +56,29 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
           <i class="fas fa-moon"></i>
         </button>
 
-        <?php if ($isLoggedIn): ?>
-          <div class="dropdown">
-            <button class="btn btn-sm user-profile" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <div class="user-avatar">
-                <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
-              </div>
-              <span><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user"></i> Mi Perfil</a></li>
-              <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
-            </ul>
-          </div>
-        <?php else: ?>
-          <button class="btn-login" data-bs-toggle="modal" data-bs-target="#authModal">
-            <i class="fas fa-sign-in-alt"></i> <span>Ingresar</span>
-          </button>
-        <?php endif; ?>
+    <?php if ($isLoggedIn): ?>
+  <div class="dropdown">
+    <button class="btn btn-sm user-profile" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <div class="user-avatar">
+        <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
+      </div>
+      <span class="d-none d-md-inline"><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
+      <i class="fas fa-chevron-down ms-1"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+      <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user me-2"></i> Mi Perfil</a></li>
+      <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog me-2"></i> Configuración</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a></li>
+    </ul>
+  </div>
+<?php else: ?>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#authModal">
+    <i class="fas fa-sign-in-alt me-1"></i> <span class="d-none d-md-inline">Ingresar</span>
+  </button>
+<?php endif; ?>
+
+
       </div>
     </div>
   </nav>
@@ -218,5 +220,26 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     }
   });
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const userProfile = document.querySelector('.user-profile');
+  const dropdownMenu = document.querySelector('.dropdown-menu');
+  
+  if (userProfile && dropdownMenu) {
+    userProfile.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+    });
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.dropdown')) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+  }
+});
+</script>
 </body>
 </html>

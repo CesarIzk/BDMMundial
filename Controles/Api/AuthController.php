@@ -50,8 +50,7 @@ class AuthController
             return $this->redirectWithError('Tu cuenta ha sido desactivada');
         }
 
-        // Crear sesión
-        session_start();
+        // Crear sesión (ya iniciada en index.php)
         $_SESSION['user'] = [
             'idUsuario' => $user['idUsuario'],
             'Nombre' => $user['Nombre'],
@@ -139,8 +138,7 @@ class AuthController
                 [$email]
             )->find();
 
-            // Crear sesión automáticamente
-            session_start();
+            // Crear sesión automáticamente (ya iniciada en index.php)
             $_SESSION['user'] = [
                 'idUsuario' => $newUser['idUsuario'],
                 'Nombre' => $newUser['Nombre'],
@@ -161,7 +159,6 @@ class AuthController
      */
     public function logout()
     {
-        session_start();
         session_destroy();
         return redirect('/');
     }
@@ -171,9 +168,6 @@ class AuthController
      */
     private function redirectWithError($message)
     {
-        if (!isset($_SESSION)) {
-            session_start();
-        }
         $_SESSION['error'] = $message;
         header('Location: /#authModal');
         exit;
