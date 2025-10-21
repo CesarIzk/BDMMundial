@@ -79,7 +79,6 @@ class PostController
      */
     public function store()
     {
-        session_start();
 
         // Verificar autenticación
         if (!isset($_SESSION['user'])) {
@@ -177,7 +176,6 @@ class PostController
      */
     public function like()
     {
-        session_start();
 
         if (!isset($_SESSION['user'])) {
             http_response_code(401);
