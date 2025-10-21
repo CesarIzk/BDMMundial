@@ -70,7 +70,7 @@ class Router
             if (str_contains($route['controles'], '@')) {
                 [$controllerPath, $methodName] = explode('@', $route['controles']);
 
-                // Convertir ruta a namespace (controles/Api/AuthController → Controles\Api\AuthController)
+                // Convertir ruta a namespace (controles/Api/AuthController → controles\Api\AuthController)
                 $controllerClass = $this->pathToNamespace($controllerPath);
                 
                 // Verificar que la clase exista
