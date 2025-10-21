@@ -25,7 +25,7 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     <div class="header-contenido contenedor">
       <a href="/" class="logo">
         <i class="fas fa-futbol"></i>
-        <h1>MundialFan</h1>
+        <h1>MundialFan - Aun en desarrollo</h1>
       </a>
     </div>
   </header>

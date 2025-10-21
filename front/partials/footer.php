@@ -31,7 +31,7 @@
       </div>
     </div>
     <div class="copyright">
-      <p>&copy; 2023 MundialFan. Todos los derechos reservados.</p>
+      <p>&copy; 2023 MundialFan. Todos los derechos reservados. Esta pagina sigue en desarrollo por lo que aun puede haber momentos donde haya secciones sin terminar o en progreso</p>
     </div>
   </div>
 </footer>

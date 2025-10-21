@@ -2,4 +2,4 @@
 
 <?php echo("Algo salio mal")?>
 
-<div>Error 404 - Oops</div>
+<div>Error 404 - Oops, Estamos trabajando en ello!!!</div>
