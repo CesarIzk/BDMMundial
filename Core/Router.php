@@ -59,36 +59,57 @@ class Router
 
         return $this;
     }
+public function route($uri, $method)
+    {
+        foreach ($this->routes as $route) {
+            // 1. Comprobar el método HTTP
+            if ($route['method'] !== strtoupper($method)) {
+                continue; 
+            }
 
-   public function route($uri, $method)
-{
-    foreach ($this->routes as $route) {
-        if ($route['uri'] === $uri && $route['method'] === strtoupper($method)) {
-            Middleware::resolve($route['middleware']);
+            // 2. Convertir la URI de la ruta a una expresión regular
+            // ¡CAMBIO 1: Quitado el '\' de [^\/]+
+            $regexUri = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $route['uri']);
+            
+            // ¡CAMBIO 2: Se usa ~ como delimitador y se quitó str_replace
+            $regexPattern = '~^' . $regexUri . '$~';
 
-            // Verificar si el controlador tiene formato tipo 'Clase@metodo'
-            if (str_contains($route['controles'], '@')) {
-                [$controllerPath, $methodName] = explode('@', $route['controles']);
-
-                // Convertir ruta a namespace (controles/Api/AuthController → controles\Api\AuthController)
-                $controllerClass = $this->pathToNamespace($controllerPath);
+            // 3. Comprobar si la URI actual del navegador coincide con el patrón
+            if (preg_match($regexPattern, $uri, $matches)) { // Esta es tu línea 77
                 
-                // Verificar que la clase exista
-                if (!class_exists($controllerClass)) {
-                    $this->abort(500);
+                Middleware::resolve($route['middleware']);
+
+                // 4. Extraer los parámetros (con el fix para PHP < 5.6)
+                $params = [];
+                foreach ($matches as $key => $value) {
+                    if (is_string($key)) {
+                        $params[$key] = $value;
+                    }
                 }
 
-                $controller = new $controllerClass;
-                return $controller->$methodName();
-            } else {
-                // Es solo un archivo PHP de vista
-                return require base_path($route['controles']);
+                // 5. Comprobar si es un controlador o una vista
+                if (str_contains($route['controles'], '@')) {
+                    [$controllerPath, $methodName] = explode('@', $route['controles']);
+
+                    $controllerClass = $this->pathToNamespace($controllerPath);
+                    
+                    if (!class_exists($controllerClass)) {
+                        $this->abort(500);
+                    }
+
+                    $controller = new $controllerClass;
+                    
+                    // 6. Pasar los parámetros al método
+                    return $controller->$methodName($params);
+                
+                } else {
+                    return require base_path($route['controles']);
+                }
             }
         }
-    }
 
-    $this->abort();
-}
+        $this->abort();
+    }
 
 /**
  * Convierte ruta de archivo a namespace de clase

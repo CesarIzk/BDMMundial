@@ -32,6 +32,10 @@ class Publicacion
      */
     public function all($limit = 10, $offset = 0)
     {
+        // ¡CORREGIDO! Faltaban los (int) casts
+        $limit = (int) $limit;
+        $offset = (int) $offset;
+
         return $this->db->query(
             'SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
              FROM publicaciones p
@@ -48,6 +52,9 @@ class Publicacion
      */
     public function getFeatured($limit = 3)
     {
+        // ¡CORREGIDO! Faltaba el (int) cast
+        $limit = (int) $limit;
+
         return $this->db->query(
             'SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
              FROM publicaciones p
@@ -64,6 +71,10 @@ class Publicacion
      */
     public function getByUser($idUsuario, $limit = 10, $offset = 0)
     {
+        // ¡CORREGIDO! Faltaban los (int) casts
+        $limit = (int) $limit;
+        $offset = (int) $offset;
+
         return $this->db->query(
             'SELECT p.*, u.Nombre, u.username, u.fotoPerfil
              FROM publicaciones p
@@ -192,6 +203,9 @@ class Publicacion
      */
     public function search($query, $limit = 10)
     {
+        // ¡CORREGIDO! Faltaba el (int) cast
+        $limit = (int) $limit;
+
         return $this->db->query(
             'SELECT p.*, u.Nombre, u.username, u.fotoPerfil
              FROM publicaciones p
@@ -208,6 +222,12 @@ class Publicacion
      */
     public function allForAdmin($limit = 10, $offset = 0)
     {
+        // ¡¡CORRECCIÓN DE SEGURIDAD CRÍTICA!!
+        // Tu versión anterior era vulnerable a Inyección SQL.
+        // Esta versión usa parámetros '?' y (int) casts para ser segura.
+        $limit = (int) $limit;
+        $offset = (int) $offset;
+
         return $this->db->query(
             'SELECT p.*, u.Nombre, u.username
              FROM publicaciones p
@@ -226,5 +246,131 @@ class Publicacion
         return $this->db->query(
             'SELECT COUNT(*) as count FROM publicaciones'
         )->find()['count'];
+    }
+    
+    // --- MÉTODOS AÑADIDOS PARA DASHBOARD Y REPORTES ---
+
+    /**
+     * Contar publicaciones nuevas de hoy
+     */
+    public function countNuevasHoy()
+    {
+        return $this->db->query(
+            "SELECT COUNT(*) as count FROM publicaciones WHERE DATE(postdate) = CURDATE()"
+        )->find()['count'];
+    }
+
+    /**
+     * Contar publicaciones por estado
+     */
+    public function countByEstado($estado = 'oculto')
+    {
+        return $this->db->query(
+            "SELECT COUNT(*) as count FROM publicaciones WHERE estado = ?",
+            [$estado]
+        )->find()['count'];
+    }
+
+    /**
+     * Obtener publicaciones recientes (para log de actividad)
+     */
+    public function getRecientes($limit = 5)
+    {
+        return $this->db->query(
+            "SELECT p.postdate, u.username 
+             FROM publicaciones p 
+             JOIN users u ON p.idUsuario = u.idUsuario 
+             ORDER BY p.postdate DESC LIMIT ?",
+            [(int)$limit]
+        )->get();
+    }
+
+    /**
+     * Obtener datos para gráfico de 7 días
+     */
+    public function getNuevasPublicaciones7Dias()
+    {
+        return $this->db->query(
+            "SELECT DATE(postdate) as dia, COUNT(*) as total 
+             FROM publicaciones 
+             WHERE postdate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) 
+             GROUP BY dia ORDER BY dia ASC"
+        )->get();
+    }
+
+    /**
+     * Obtener stats generales de publicaciones en rango
+     */
+    public function getReporteGeneralRango($inicio, $fin)
+    {
+        return $this->db->query(
+            "SELECT 
+                COUNT(*) as totalPublicaciones, 
+                SUM(likes) as totalInteracciones, 
+                AVG(likes) as promedioLikes 
+             FROM publicaciones 
+             WHERE postdate BETWEEN ? AND ?",
+            [$inicio, $fin]
+        )->find();
+    }
+    
+    /**
+     * Obtener stats de tipos de contenido en rango
+     */
+    public function getContenidoStatsRango($inicio, $fin)
+    {
+        $data = $this->db->query(
+            "SELECT 
+                CASE 
+                    WHEN tipoContenido = 'imagen' THEN 'imagen'
+                    WHEN tipoContenido = 'video' THEN 'video'
+                    ELSE 'texto' 
+                END as tipo, 
+                COUNT(*) as total 
+             FROM publicaciones 
+             WHERE postdate BETWEEN ? AND ?
+             GROUP BY tipo",
+            [$inicio, $fin]
+        )->get();
+        
+        // Convertir de [ ['tipo' => 'imagen', 'total' => 10] ] a ['imagen' => 10]
+        return array_column($data, 'total', 'tipo');
+    }
+    
+    /**
+     * Obtener top publicaciones populares en rango
+     */
+    public function getTopPopularesRango($inicio, $fin, $limit = 10)
+    {
+        return $this->db->query(
+            "SELECT p.texto, p.likes, u.username 
+             FROM publicaciones p
+             JOIN users u ON p.idUsuario = u.idUsuario
+             WHERE p.postdate BETWEEN ? AND ?
+             ORDER BY p.likes DESC
+             LIMIT ?",
+            [$inicio, $fin, (int)$limit]
+        )->get();
+    }
+
+    /**
+     * Obtener reporte detallado por día (simplificado)
+     */
+    public function getReporteDetalladoRango($inicio, $fin)
+    {
+        $posts = $this->db->query(
+            "SELECT 
+                DATE(postdate) as fecha, 
+                COUNT(*) as nuevasPublicaciones, 
+                SUM(likes) as totalLikes, 
+                COUNT(DISTINCT idUsuario) as usuariosActivos 
+             FROM publicaciones 
+             WHERE postdate BETWEEN ? AND ?
+             GROUP BY fecha 
+             ORDER BY fecha ASC",
+            [$inicio, $fin]
+        )->get();
+        
+        return $posts;
     }
 }

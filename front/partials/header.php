@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $isLoggedIn = isset($_SESSION['user']);
 $user = $isLoggedIn ? $_SESSION['user'] : null;
+$isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -36,14 +37,19 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
         <i class="fas fa-bars"></i>
       </button>
 
-      <ul class="navbar" id="navbar-menu">
+     <ul class="navbar" id="navbar-menu">
         <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
         <li><a href="/campeonatos"><i class="fas fa-trophy"></i> <span>Campeonatos</span></a></li>
         <li><a href="/equipos"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
         <li><a href="/publicaciones"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
         <li><a href="/stats"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
         <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
+        
+        <?php if ($isAdmin): ?>
+          <li><a href="/admin/usuarios" style="color: #00aaff;"><i class="fas fa-users-cog"></i> <span>Admin</span></a></li>
+        <?php endif; ?>
       </ul>
+    
 
       <div class="auth-buttons">
         <?php if ($isLoggedIn): ?>

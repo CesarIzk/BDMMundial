@@ -4,8 +4,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Asumimos que el router ya validó que es un admin
-// pero igual tomamos sus datos de sesión
 $isLoggedIn = isset($_SESSION['user']);
 $user = $isLoggedIn ? $_SESSION['user'] : null;
 ?>
@@ -20,14 +18,14 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <link rel="stylesheet" href="/css/styles.css?v=1.0.13">
-  <link rel="stylesheet" href="/css/admin.css?v=1.0.1"> </head>
+</head>
 
 <body>
   <header>
     <div class="header-contenido contenedor">
-      <a href="/admin/dashboard" class="logo"> <i class="fas fa-shield-halved"></i>
+      <a href="/admin/dashboard" class="logo">
+        <i class="fas fa-shield-halved"></i>
         <h1>MundialFan - Panel de Admin</h1>
       </a>
     </div>
@@ -48,28 +46,39 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
       </ul>
 
       <div class="auth-buttons">
-        
         <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
           <i class="fas fa-moon"></i>
         </button>
 
         <?php if ($isLoggedIn && $user): ?>
           <div class="dropdown">
-            <button class="btn btn-sm user-profile" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-              <div class="user-avatar" style="background-color: #c0392b;"> <?php echo strtoupper(substr($user['username'] ?? 'A', 0, 1)); ?>
+            <button 
+              class="btn btn-sm user-profile" 
+              type="button" 
+              id="adminDropdown" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+            >
+              <div class="user-avatar" style="background-color: #c0392b;">
+                <?php echo strtoupper(substr($user['username'] ?? 'A', 0, 1)); ?>
               </div>
               <span class="d-none d-md-inline"><?php echo htmlspecialchars($user['username'] ?? 'Admin'); ?></span>
               <i class="fas fa-chevron-down ms-1"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
               <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user me-2"></i> Mi Perfil</a></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a></li>
             </ul>
           </div>
         <?php endif; ?>
-        </div>
+      </div>
     </div>
   </nav>
 
   <main class="admin-container container mt-4">
+
+  <!-- Bootstrap JS al final del body -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/dark-mode.js"></script>
+  <script src="/js/navbar-mobile.js"></script>

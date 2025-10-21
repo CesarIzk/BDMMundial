@@ -151,25 +151,36 @@ class PostController
     /**
      * Obtener publicación por ID
      */
-    public function show($id)
-    {
-        $post = $this->db->query(
-            "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-             FROM publicaciones p
-             JOIN users u ON p.idUsuario = u.idUsuario 
-             WHERE p.idPublicacion = ? AND p.estado = 'publico'",
-            [$id]
-        )->find();
+  /**
+ * Obtener publicación por ID
+ */
+public function show($id)
+{
+    $postId = is_array($id) ? $id['id'] : $id;
+    
+    $post = $this->db->query(
+        "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
+         FROM publicaciones p
+         JOIN users u ON p.idUsuario = u.idUsuario 
+         WHERE p.idPublicacion = ?",
+        [$postId]
+    )->find();
 
-        if (!$post) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Publicación no encontrada']);
-            return;
-        }
+    if (!$post) {
+        http_response_code(404);
+        abort(404);
+    }
 
+    // Si es una petición JSON (API)
+    if ($this->isJson()) {
         header('Content-Type: application/json');
         echo json_encode($post);
+        return;
     }
+
+    // Si es navegador, mostrar vista
+    return view('/admin/PostDetalle.php', ['post' => $post]);
+}
 
     /**
      * Agregar like (AJAX)

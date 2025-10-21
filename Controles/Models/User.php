@@ -49,9 +49,8 @@ class User
     /**
      * Obtener todos los usuarios con paginación
      */
-public function all($limit = 10, $offset = 0)
+    public function all($limit = 10, $offset = 0)
     {
-        // ¡AÑADE ESTAS DOS LÍNEAS!
         $limit = (int) $limit;
         $offset = (int) $offset;
 
@@ -61,12 +60,11 @@ public function all($limit = 10, $offset = 0)
         )->get();
     }
 
-/**
+    /**
      * Obtener usuarios activos
      */
     public function getActive($limit = 10, $offset = 0)
     {
-        // ¡AÑADE ESTAS DOS LÍNEAS TAMBIÉN!
         $limit = (int) $limit;
         $offset = (int) $offset;
 
@@ -191,12 +189,11 @@ public function all($limit = 10, $offset = 0)
         )->find();
     }
 
-/**
+    /**
      * Usuarios más activos (para reportes)
      */
     public function getTopUsers($limit = 10)
     {
-        // ¡Y AÑADE ESTA LÍNEA AQUÍ!
         $limit = (int) $limit;
 
         return $this->db->query(
@@ -207,6 +204,94 @@ public function all($limit = 10, $offset = 0)
              ORDER BY postCount DESC
              LIMIT ?',
             [$limit]
+        )->get();
+    }
+
+    // --- MÉTODOS AÑADIDOS PARA DASHBOARD Y REPORTES ---
+
+    /**
+     * Contar usuarios nuevos de hoy
+     */
+    public function countNuevosHoy()
+    {
+        return $this->db->query(
+            "SELECT COUNT(*) as count FROM users WHERE DATE(fechaRegistro) = CURDATE()"
+        )->find()['count'];
+    }
+
+    /**
+     * Contar usuarios que publicaron en los últimos X días
+     */
+    public function countActivosRecientes($dias = 7)
+    {
+        return $this->db->query(
+            "SELECT COUNT(DISTINCT idUsuario) as count 
+             FROM publicaciones 
+             WHERE postdate >= DATE_SUB(CURDATE(), INTERVAL ? DAY)",
+            [$dias]
+        )->find()['count'];
+    }
+
+    /**
+     * Obtener usuarios recientes (para log de actividad)
+     */
+    public function getRecientes($limit = 5)
+    {
+        return $this->db->query(
+            "SELECT username, fechaRegistro FROM users ORDER BY fechaRegistro DESC LIMIT ?",
+            [(int)$limit]
+        )->get();
+    }
+    
+    /**
+     * Obtener datos para gráfico de 7 días
+     */
+    public function getNuevosUsuarios7Dias()
+    {
+        return $this->db->query(
+            "SELECT DATE(fechaRegistro) as dia, COUNT(*) as total 
+             FROM users 
+             WHERE fechaRegistro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) 
+             GROUP BY dia ORDER BY dia ASC"
+        )->get();
+    }
+    
+    /**
+     * Contar usuarios en un rango de fechas
+     */
+    public function countRango($inicio, $fin)
+    {
+        return $this->db->query(
+            "SELECT COUNT(*) as count FROM users WHERE fechaRegistro BETWEEN ? AND ?",
+            [$inicio, $fin]
+        )->find()['count'];
+    }
+
+    /**
+     * Obtener usuarios por país
+     */
+    public function getUsuariosPorPais()
+    {
+        return $this->db->query(
+            "SELECT pais, COUNT(*) as total FROM users GROUP BY pais ORDER BY total DESC"
+        )->get();
+    }
+    
+    /**
+     * Obtener top usuarios activos en rango
+     */
+  public function getTopActivosRango($inicio, $fin, $limit = 10)
+    {
+        // ¡ASEGÚRATE DE QUE ESTA LÍNEA TENGA 'return'!
+        return $this->db->query(
+            "SELECT u.username, u.Nombre, COUNT(p.idPublicacion) as totalPublicaciones 
+             FROM users u
+             JOIN publicaciones p ON u.idUsuario = p.idUsuario
+             WHERE p.postdate BETWEEN ? AND ?
+             GROUP BY u.idUsuario, u.username, u.Nombre
+             ORDER BY totalPublicaciones DESC
+             LIMIT ?",
+            [$inicio, $fin, (int)$limit]
         )->get();
     }
 }
