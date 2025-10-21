@@ -1,5 +1,5 @@
 <?php
 
-use Controles\Api\PostController;
+use controles\Api\PostController;
 
 return (new PostController())->index();
