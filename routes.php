@@ -6,8 +6,8 @@ $router->post('/register', 'Controles/Api/AuthController@register');
 $router->get('/logout', 'Controles/Api/AuthController@logout');
 
 // Publicaciones
-$router->get('/Post', 'Controls/Post.php');
-$router->get('/Post/crear', 'Controls/CrearPublicacion.php');
+$router->get('/Post', 'controls/Post.php');
+$router->get('/Post/crear', 'controls/CrearPublicacion.php');
 $router->post('/Post/store', 'Controles/Api/PostController@store');
 $router->post('/Post/{id}/like', 'Controles/Api/PostController@like');
 
