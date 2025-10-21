@@ -88,38 +88,86 @@
 </div>
 
 <script>
-// Manejar likes con AJAX
-document.querySelectorAll('.post-actions button').forEach(btn => { // CAMBIO: Selector actualizado
-    btn.addEventListener('click', async function() {
-        // ... (el resto de tu script está bien)
-        const postId = this.dataset.postId;
-        const likeCount = this.querySelector('.like-count');
-        
-        try {
-            const response = await fetch('/Post/like', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `postId=${postId}`
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                likeCount.textContent = data.likes;
-                if (data.accion === 'liked') {
-                    this.classList.add('liked');
-                } else {
-                    this.classList.remove('liked');
-                }
-            } else {
-                alert(data.error || 'Error al procesar like');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error de conexión');
+document.addEventListener("DOMContentLoaded", () => {
+    // ===== SLIDER =====
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+
+    function showSlide(slideIndex) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        if (slides[slideIndex]) {
+            slides[slideIndex].classList.add('active');
+            dots[slideIndex].classList.add('active');
         }
+    }
+
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const slideIndex = parseInt(dot.dataset.slide);
+            showSlide(slideIndex);
+        });
+    });
+
+    // ===== LIKES =====
+    // Seleccionar TODOS los botones de like (destacadas y normales)
+    const likeButtons = document.querySelectorAll('.btn-accion, .post-actions button');
+    
+    likeButtons.forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const postId = this.dataset.postId;
+            const likeCount = this.querySelector('.like-count');
+            
+            if (!postId) {
+                console.error('No se encontró postId en el botón');
+                return;
+            }
+            
+            if (!likeCount) {
+                console.error('No se encontró el elemento like-count');
+                return;
+            }
+            
+            console.log('Enviando like para post:', postId); // Debug
+            
+            try {
+                const formData = new FormData();
+                formData.append('postId', postId);
+                
+                const response = await fetch('/Post/like', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Respuesta HTTP:', response.status); // Debug
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Error del servidor:', text);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Datos recibidos:', data); // Debug
+                
+                if (data.success) {
+                    likeCount.textContent = data.likes;
+                    
+                    if (data.accion === 'liked') {
+                        this.classList.add('liked');
+                    } else {
+                        this.classList.remove('liked');
+                    }
+                } else {
+                    alert(data.error || 'Error al procesar like');
+                }
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert('Error de conexión. Revisa la consola.');
+            }
+        });
     });
 });
 </script>
