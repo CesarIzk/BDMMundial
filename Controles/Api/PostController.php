@@ -18,24 +18,22 @@ class PostController
      */
     public function index()
     {
-        $page = $_GET['page'] ?? 1;
-     $limit = 10;
-$offset = ($page - 1) * $limit;
-
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
         $userId = $_GET['user'] ?? null;
 
         if ($userId) {
             // Publicaciones de un usuario específico
-          $posts = $this->db->query(
-    "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-     FROM publicaciones p
-     JOIN users u ON p.idUsuario = u.idUsuario 
-     WHERE p.idUsuario = ? AND p.estado = 'publico'
-     ORDER BY p.postdate DESC 
-     LIMIT {$limit} OFFSET {$offset}",
-    [$userId]
-)->get();
-
+            $posts = $this->db->query(
+                "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
+                 FROM publicaciones p
+                 JOIN users u ON p.idUsuario = u.idUsuario 
+                 WHERE p.idUsuario = ? AND p.estado = 'publico'
+                 ORDER BY p.postdate DESC 
+                 LIMIT $limit OFFSET $offset",
+                [$userId]
+            )->get();
 
             $total = $this->db->query(
                 "SELECT COUNT(*) as count FROM publicaciones WHERE idUsuario = ? AND estado = 'publico'",
@@ -43,14 +41,14 @@ $offset = ($page - 1) * $limit;
             )->find()['count'];
         } else {
             // Todas las publicaciones públicas
-          $posts = $this->db->query(
-    "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-     FROM publicaciones p
-     JOIN users u ON p.idUsuario = u.idUsuario 
-     WHERE p.estado = 'publico'
-     ORDER BY p.postdate DESC 
-     LIMIT {$limit} OFFSET {$offset}"
-)->get();
+            $posts = $this->db->query(
+                "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
+                 FROM publicaciones p
+                 JOIN users u ON p.idUsuario = u.idUsuario 
+                 WHERE p.estado = 'publico'
+                 ORDER BY p.postdate DESC 
+                 LIMIT $limit OFFSET $offset"
+            )->get();
 
             $total = $this->db->query(
                 "SELECT COUNT(*) as count FROM publicaciones WHERE estado = 'publico'"
@@ -81,7 +79,7 @@ $offset = ($page - 1) * $limit;
      */
     public function store()
     {
-   
+        session_start();
 
         // Verificar autenticación
         if (!isset($_SESSION['user'])) {
@@ -179,6 +177,7 @@ $offset = ($page - 1) * $limit;
      */
     public function like()
     {
+        session_start();
 
         if (!isset($_SESSION['user'])) {
             http_response_code(401);

@@ -9,14 +9,14 @@ class Authenticated
        
 
         // Verifica si hay sesión iniciada y si existe el ID del usuario
-        if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+        if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
             // Si no está autenticado, redirige al inicio de sesión
             header('Location: /');
             exit();
         }
 
         // (Opcional) Validación extra: podrías verificar que el ID sea un número válido
-        if (!is_numeric($_SESSION['user']['id'])) {
+        if (!is_numeric($_SESSION['user']['idUsuario'])) {
             // Si algo no cuadra, mejor destruir la sesión y redirigir
             session_destroy();
             header('Location: /');

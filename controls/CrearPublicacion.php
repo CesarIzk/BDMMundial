@@ -1,2 +1,3 @@
 <?php
-return view('CrearPublicacion.php');
+
+return view("CrearPublicacion.php");
