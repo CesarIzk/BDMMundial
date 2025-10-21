@@ -1,15 +1,15 @@
 <?php
 
 // Autenticación (sin .php, solo el namespace)
-$router->post('/login', 'controles/Api/AuthController@login');
-$router->post('/register', 'controles/Api/AuthController@register');
-$router->get('/logout', 'controles/Api/AuthController@logout');
+$router->post('/login', 'Controles/Api/AuthController@login');
+$router->post('/register', 'Controles/Api/AuthController@register');
+$router->get('/logout', 'Controles/Api/AuthController@logout');
 
 // Publicaciones
-$router->get('/Post', 'controls/Post.php');
-$router->get('/Post/crear', 'controls/CrearPublicacion.php');
-$router->post('/Post/store', 'controles/Api/PostController@store');
-$router->post('/Post/{id}/like', 'controles/Api/PostController@like');
+$router->get('/Post', 'Controls/Post.php');
+$router->get('/Post/crear', 'Controls/CrearPublicacion.php');
+$router->post('/Post/store', 'Controles/Api/PostController@store');
+$router->post('/Post/{id}/like', 'Controles/Api/PostController@like');
 
 // Rutas existentes
 $router->get('/', 'controls/inicio.php');
