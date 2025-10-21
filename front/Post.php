@@ -13,7 +13,7 @@
             <div class="destacado-post">
                 
                 <div class="destacado-contenido">
-                    <h2><?= htmlspecialchars($post['Nombre'] ?? $post['username']) ?></h2>
+                    <h2><?= htmlspecialchars($post['username'] ?? $post['Nombre']) ?></h2>
                     <p><?= htmlspecialchars($post['texto']) ?></p>
                     
                     <button type="button" class="btn-accion" data-post-id="<?= $post['idPublicacion'] ?>">
@@ -110,7 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ===== LIKES =====
-    // Seleccionar TODOS los botones de like (destacadas y normales)
     const likeButtons = document.querySelectorAll('.btn-accion, .post-actions button');
     
     likeButtons.forEach(btn => {
@@ -132,6 +131,8 @@ document.addEventListener("DOMContentLoaded", () => {
             
             console.log('Enviando like para post:', postId); // Debug
             
+            // --- INICIO DEL BLOQUE ARREGLADO ---
+            // Este es el ÚNICO try...catch que debe estar aquí.
             try {
                 const formData = new FormData();
                 formData.append('postId', postId);
@@ -143,11 +144,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 console.log('Respuesta HTTP:', response.status); // Debug
                 
+                // Si la respuesta NO fue exitosa (ej. 401, 404, 500)
                 if (!response.ok) {
-                    const text = await response.text();
-                    console.error('Error del servidor:', text);
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    let errorData = { error: 'Error desconocido' };
+                    try {
+                        // Intenta leer el JSON de error (ej. {'error': 'No autenticado'})
+                        errorData = await response.json();
+                    } catch (e) {
+                        // Si falla, es porque el servidor envió HTML
+                        errorData.error = "El servidor envió una respuesta inesperada (HTML).";
+                        console.error("La respuesta no fue JSON, probablemente HTML de error o redirección.");
+                    }
+
+                    // Manejo específico para el error 401 (No autenticado)
+                    if (response.status === 401) {
+                        alert(errorData.error === 'No autenticado' ? 'Debes iniciar sesión para dar like' : errorData.error);
+                    } else {
+                        // Para cualquier otro error (500, 405)
+                        console.error('Error del servidor:', errorData.error);
+                        alert('Error del servidor: ' + (errorData.error || 'Revisa la consola'));
+                    }
+                    
+                    return; // IMPORTANTE: Salimos de la función aquí
                 }
+
                 
                 const data = await response.json();
                 console.log('Datos recibidos:', data); // Debug
@@ -163,13 +184,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     alert(data.error || 'Error al procesar like');
                 }
+
             } catch (error) {
-                console.error('Error completo:', error);
-                alert('Error de conexión. Revisa la consola.');
+               
+                console.error('Error de conexión:', error);
+                alert('Error de conexión. Revisa tu internet o intenta más tarde.');
             }
+            // --- FIN DEL BLOQUE ARREGLADO ---
         });
     });
 });
 </script>
-
 <?php require 'partials/footer.php'; ?>

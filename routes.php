@@ -9,7 +9,7 @@ $router->get('/logout', 'Controles/Api/AuthController@logout');
 $router->get('/Post', 'Controles/Api/PostController@index');
 $router->get('/Post/crear', 'controls/CrearPublicacion.php')->only('auth');
 $router->post('/Post/store', 'Controles/Api/PostController@store')->only('auth');
-$router->post('/Post/like', 'Controles/Api/PostController@like')->only('auth');
+$router->post('/Post/like', 'Controles/Api/PostController@like');
 
 // Admin - Gestión de usuarios
 $router->get('/admin/usuarios', 'Controles/Api/AdminController@users')->only('admin');
@@ -32,3 +32,8 @@ $router->get('/tienda', 'controls/tienda.php');
 $router->get('/stats', 'controls/stats.php');
 $router->get('/publicaciones', 'controls/Post.php');
 $router->get('/perfil', 'controls/perfil.php')->only('auth');
+
+// Admin - Gestión de usuarios
+$router->get('/admin/usuarios', 'Controles/Api/AdminController@users')->only('admin');
+$router->post('/admin/usuario/{id}/baja', 'Controles/Api/AdminController@deactivateUser')->only('admin');
+$router->post('/admin/usuario/{id}/activar', 'Controles/Api/AdminController@activateUser')->only('admin');

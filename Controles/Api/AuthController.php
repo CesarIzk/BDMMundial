@@ -68,7 +68,7 @@ class AuthController
 
         // Redirigir según rol
         if ($user['rol'] === 'admin') {
-            return redirect('/admin/dashboard');
+            return redirect('/admin/usuarios');
         }
 
         return redirect('/');

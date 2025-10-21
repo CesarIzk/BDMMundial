@@ -49,19 +49,27 @@ class User
     /**
      * Obtener todos los usuarios con paginación
      */
-    public function all($limit = 10, $offset = 0)
+public function all($limit = 10, $offset = 0)
     {
+        // ¡AÑADE ESTAS DOS LÍNEAS!
+        $limit = (int) $limit;
+        $offset = (int) $offset;
+
         return $this->db->query(
             'SELECT * FROM users ORDER BY fechaRegistro DESC LIMIT ? OFFSET ?',
             [$limit, $offset]
         )->get();
     }
 
-    /**
+/**
      * Obtener usuarios activos
      */
     public function getActive($limit = 10, $offset = 0)
     {
+        // ¡AÑADE ESTAS DOS LÍNEAS TAMBIÉN!
+        $limit = (int) $limit;
+        $offset = (int) $offset;
+
         return $this->db->query(
             'SELECT * FROM users WHERE estado = ? ORDER BY fechaRegistro DESC LIMIT ? OFFSET ?',
             ['activo', $limit, $offset]
@@ -183,11 +191,14 @@ class User
         )->find();
     }
 
-    /**
+/**
      * Usuarios más activos (para reportes)
      */
     public function getTopUsers($limit = 10)
     {
+        // ¡Y AÑADE ESTA LÍNEA AQUÍ!
+        $limit = (int) $limit;
+
         return $this->db->query(
             'SELECT u.idUsuario, u.Nombre, u.username, COUNT(p.idPublicacion) as postCount
              FROM users u
