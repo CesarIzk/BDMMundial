@@ -66,7 +66,7 @@
 .post-media {
   position: relative;
   width: 100%;
-  padding-top: 56.25%; /* 16:9 */
+  padding-top: 40%; /* 16:9 */
   overflow: hidden;
   background: rgba(0, 0, 0, 0.05);
 }
@@ -156,7 +156,7 @@
 .media-container {
   position: relative;
   width: 100%;
-  padding-top: 56.25%; /* 16:9 */
+  padding-top: 40%; /* 16:9 */
   margin-top: var(--spacing-md);
   overflow: hidden;
   border-radius: var(--radius-lg);
@@ -255,7 +255,7 @@
 .destacado-media {
   position: relative;
   width: 100%;
-  padding-top: 56.25%; /* 16:9 */
+  padding-top: 40; /* 16:9 */
   overflow: hidden;
   border-radius: var(--radius-lg);
 }

@@ -1,6 +1,4 @@
--- Crear base de datos
-CREATE DATABASE IF NOT EXISTS REDSOCIAL;
-USE REDSOCIAL;
+
 
 -- Tabla de usuarios
 CREATE TABLE users (
