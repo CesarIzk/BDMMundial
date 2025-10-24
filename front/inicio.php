@@ -1,12 +1,28 @@
 <?php require 'partials/header.php'; ?> 
 
-
   <section class="hero">
+    <!-- Slideshow de imágenes de fondo -->
+    <div class="hero-slideshow">
+      <div class="hero-slide"></div>
+      <div class="hero-slide"></div>
+      <div class="hero-slide"></div>
+    </div>
+    
+    <!-- Contenido del hero -->
     <div class="hero-contenido">
       <h2>Vive la Emoción del Mundial</h2>
       <p>Todo lo que necesitas saber sobre el mayor evento de fútbol del planeta. Noticias, estadísticas, resultados y mucho más.</p>
-      <a href="#" class="boton">Ver Partidos</a>
-      <a href="#" class="boton">Comprar Entradas</a>
+      <div class="hero-buttons">
+        <a href="#" class="boton">Ver Partidos</a>
+        <a href="#" class="boton">Comprar Entradas</a>
+      </div>
+    </div>
+    
+    <!-- Indicadores opcionales (puedes eliminar esta sección si no los quieres) -->
+    <div class="hero-indicators">
+      <span class="hero-indicator"></span>
+      <span class="hero-indicator"></span>
+      <span class="hero-indicator"></span>
     </div>
   </section>
 
@@ -38,4 +54,4 @@
     </div>
   </section>
 
- <?php require 'partials/footer.php'; ?>
+<?php require 'partials/footer.php'; ?>
