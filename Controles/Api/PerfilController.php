@@ -25,68 +25,67 @@ class PerfilController
     /**
      * Mostrar configuración del perfil
      */
-  public function index()
-{
-    $this->authorizeUser();
+    public function index()
+    {
+        $this->authorizeUser();
 
-    $user = $_SESSION['user'];
-    $success = $_SESSION['success'] ?? null;
-    $error = $_SESSION['error'] ?? null;
-    $info = $_SESSION['info'] ?? null;
-    unset($_SESSION['success'], $_SESSION['error'], $_SESSION['info']);
+        $user = $_SESSION['user'];
+        $success = $_SESSION['success'] ?? null;
+        $error = $_SESSION['error'] ?? null;
+        $info = $_SESSION['info'] ?? null;
+        unset($_SESSION['success'], $_SESSION['error'], $_SESSION['info']);
 
-    return view('configuracion.php', [
-        'userData' => $user,
-        'success' => $success,
-        'error' => $error,
-        'info' => $info
-    ]);
-}
+        return view('configuracion.php', [
+            'userData' => $user,
+            'success' => $success,
+            'error' => $error,
+            'info' => $info
+        ]);
+    }
 
     /**
      * Actualizar datos del usuario
      */
- public function update()
-{
-    $this->authorizeUser();
+    public function update()
+    {
+        $this->authorizeUser();
 
-    $id = $_SESSION['user']['idUsuario'];
-    $userActual = $this->userModel->findById($id);
+        $id = $_SESSION['user']['idUsuario'];
+        $userActual = $this->userModel->findById($id);
 
-    if (!$userActual) {
-        $_SESSION['error'] = "Usuario no encontrado";
-        return redirect('/configuracion');
-    }
-
-    // Campos permitidos para actualizar
-    $camposPermitidos = [
-        'Nombre', 'biografia', 'fechaNacimiento',
-        'genero', 'ciudad', 'pais', 'email'
-    ];
-
-    $data = [];
-
-    foreach ($camposPermitidos as $campo) {
-        if (isset($_POST[$campo]) && $_POST[$campo] !== '' && $_POST[$campo] != $userActual[$campo]) {
-            $data[$campo] = trim($_POST[$campo]);
+        if (!$userActual) {
+            $_SESSION['error'] = "Usuario no encontrado";
+            return redirect('/configuracion');
         }
+
+        // Campos permitidos para actualizar
+        $camposPermitidos = [
+            'Nombre', 'biografia', 'fechaNacimiento',
+            'genero', 'ciudad', 'pais', 'email'
+        ];
+
+        $data = [];
+
+        foreach ($camposPermitidos as $campo) {
+            if (isset($_POST[$campo]) && $_POST[$campo] !== '' && $_POST[$campo] != $userActual[$campo]) {
+                $data[$campo] = trim($_POST[$campo]);
+            }
+        }
+
+        if (empty($data)) {
+            $_SESSION['info'] = "No se detectaron cambios en tu perfil.";
+            return redirect('/configuracion');
+        }
+
+        // Actualizamos solo los campos modificados
+        $this->userModel->update($id, $data);
+
+        // Refrescamos la sesión del usuario
+        $_SESSION['user'] = array_merge($_SESSION['user'], $data);
+
+        $_SESSION['success'] = "Perfil actualizado correctamente.";
+        return redirect('/perfil');
     }
-
-    if (empty($data)) {
-        $_SESSION['info'] = "No se detectaron cambios en tu perfil.";
-        return redirect('/configuracion');
-    }
-
-    // Actualizamos solo los campos modificados
-    $this->userModel->update($id, $data);
-
-    // Refrescamos la sesión del usuario
-    $_SESSION['user'] = array_merge($_SESSION['user'], $data);
-
-    $_SESSION['success'] = "Perfil actualizado correctamente.";
-    return redirect('/perfil');
-}
-
 
     /**
      * Cambiar contraseña
@@ -119,15 +118,86 @@ class PerfilController
         $this->authorizeUser();
 
         $id = $_SESSION['user']['id'];
-        if (!empty($_FILES['avatar']['name'])) {
-            $path = '/uploads/avatars/' . basename($_FILES['avatar']['name']);
-            move_uploaded_file($_FILES['avatar']['tmp_name'], __DIR__ . '/../../../public' . $path);
-            $this->userModel->update($id, ['avatar' => $path]);
-            $_SESSION['user']['avatar'] = $path;
+        
+        // Verificar que se subió un archivo
+        if (empty($_FILES['avatar']['name'])) {
+            $_SESSION['error'] = "No se seleccionó ningún archivo";
+            return redirect('/configuracion');
         }
 
-        $_SESSION['success'] = "Avatar actualizado correctamente";
-        return view('/configuracion');
+        // Verificar errores de subida
+        if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['error'] = "Error al subir el archivo. Código: " . $_FILES['avatar']['error'];
+            return redirect('/configuracion');
+        }
+
+        // Validar tipo de archivo
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $fileType = $_FILES['avatar']['type'];
+        
+        if (!in_array($fileType, $allowedTypes)) {
+            $_SESSION['error'] = "Solo se permiten imágenes (JPG, PNG, GIF, WEBP)";
+            return redirect('/configuracion');
+        }
+
+        // Validar tamaño (máximo 5MB)
+        $maxSize = 5 * 1024 * 1024; // 5MB en bytes
+        if ($_FILES['avatar']['size'] > $maxSize) {
+            $_SESSION['error'] = "El archivo es demasiado grande. Máximo 5MB";
+            return redirect('/configuracion');
+        }
+
+        // Obtener la extensión del archivo
+        $extension = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
+        
+        // Generar nombre único para evitar conflictos
+        $nombreArchivo = 'avatar_' . $id . '_' . time() . '.' . $extension;
+        
+        // Definir ruta absoluta del directorio de subida
+        // Ajusta esta ruta según tu estructura de hosting
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/avatars/';
+        
+        // Crear directorio si no existe
+        if (!file_exists($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true)) {
+                $_SESSION['error'] = "No se pudo crear el directorio de avatares";
+                return redirect('/configuracion');
+            }
+        }
+
+        // Verificar permisos de escritura
+        if (!is_writable($uploadDir)) {
+            $_SESSION['error'] = "El directorio de avatares no tiene permisos de escritura";
+            return redirect('/configuracion');
+        }
+
+        $rutaCompleta = $uploadDir . $nombreArchivo;
+        
+        // Mover archivo subido
+        if (move_uploaded_file($_FILES['avatar']['tmp_name'], $rutaCompleta)) {
+            // Ruta relativa para guardar en la BD
+            $rutaRelativa = '/uploads/avatars/' . $nombreArchivo;
+            
+            // Eliminar avatar anterior si existe
+            if (!empty($_SESSION['user']['avatar'])) {
+                $avatarAnterior = $_SERVER['DOCUMENT_ROOT'] . $_SESSION['user']['avatar'];
+                if (file_exists($avatarAnterior) && is_file($avatarAnterior)) {
+                    @unlink($avatarAnterior);
+                }
+            }
+            
+            // Actualizar en la base de datos
+            $this->userModel->update($id, ['avatar' => $rutaRelativa]);
+            
+            // Actualizar sesión
+            $_SESSION['user']['avatar'] = $rutaRelativa;
+            
+            $_SESSION['success'] = "Avatar actualizado correctamente";
+        } else {
+            $_SESSION['error'] = "Error al guardar el archivo. Verifica los permisos del servidor";
+        }
+
+        return redirect('/configuracion');
     }
 
     /**
