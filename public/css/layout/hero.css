@@ -237,3 +237,10 @@
     height: 8px;
   }
 }
+.hero-equipos {
+  background-image: url('/imagenes/equipos.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+}

@@ -19,6 +19,7 @@
 @import url('components/buttons.css');
 @import url('components/cards.css');
 @import url('components/modals.css');
+@import url('components/modal-custom.css');
 @import url('components/forms.css');
 
 /* ===== SECTIONS ===== */
@@ -27,6 +28,8 @@
 @import url('sections/posts.css');
 @import url('sections/stats.css');
 @import url('sections/perfil.css');
+@import url('sections/campeonatos.css');
+@import url('sections/equipos.css');
 
 /* ===== UTILITIES ===== */
 @import url('utils/animations.css');
