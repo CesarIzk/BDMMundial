@@ -10,8 +10,9 @@ $router->get('/Post', 'Controles/Api/PostController@index');
 $router->get('/Post/create', 'Controles\Api\PostController@create');
 $router->post('/Post/store', 'Controles\Api\PostController@store');
 $router->post('/Post/like', 'Controles/Api/PostController@like');
-$router->get('/Post/{id}', 'Controles/Api/PostController@show'); // Vista pública de un post
-
+// En tu archivo de rutas, ANTES de la ruta con {id}
+$router->get('/Post/view', 'Controles\Api\PostController@show'); // Nueva ruta
+$router->get('/Post/{id}', 'Controles\Api\PostController@show'); // Mantener esta
 // ========== PERFIL ==========
 $router->get('/perfil', 'controls/perfil.php')->only('auth');
 $router->get('/perfil/show', 'Controles/Api/PerfilController@show')->only('auth');

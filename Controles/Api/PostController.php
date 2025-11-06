@@ -77,17 +77,18 @@ class PostController
 
         $total = $this->db->query($countSql, $countParams)->find()['total'] ?? 0;
         $pages = max(ceil($total / $limit), 1);
-// 🔹 Si es AJAX (lazy load)
-if (
-    isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-) {
-    // Solo renderizamos las tarjetas
-    foreach ($posts as $post) {
-        require base_path('views/partials/postCard.php');
-    }
-    return;
-}
+
+        // 🔹 Si es AJAX (lazy load)
+        if (
+            isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+        ) {
+            // Solo renderizamos las tarjetas
+            foreach ($posts as $post) {
+                require base_path('views/partials/postCard.php');
+            }
+            return;
+        }
 
         // 🔹 Renderizar vista
         return view('Post.php', [
@@ -179,46 +180,20 @@ if (
         }
     }
 
-    // === funciones privadas ===
-    private function handleImageUpload($file)
-    {
-        if ($file['error'] === 4) return null;
-        if ($file['size'] > 5 * 1024 * 1024) return false;
-        $mime = mime_content_type($file['tmp_name']);
-        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) return false;
-
-        $dir = 'imagenes/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
-        $path = $dir . $name;
-
-        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
-    }
-
-    private function handleVideoUpload($file)
-    {
-        if ($file['error'] === 4) return null;
-        if ($file['size'] > 50 * 1024 * 1024) return false;
-        $mime = mime_content_type($file['tmp_name']);
-        if (!in_array($mime, ['video/mp4', 'video/quicktime', 'video/x-msvideo'])) return false;
-
-        $dir = 'videos/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
-        $path = $dir . $name;
-
-        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
-    }
-        /**
+    /**
      * 📄 Mostrar publicación individual (para el modal)
+     * @param array $params Parámetros de la ruta (ejemplo: ['id' => '7'])
      */
-    public function show($id)
+    public function show($params = [])
     {
-        // Si viene como array (por rutas automáticas tipo /Post/{id})
-        $postId = is_array($id) ? ($id['id'] ?? null) : $id;
-        if (!$postId) {
+        // El router siempre pasa un array con los parámetros de la URL
+        $postId = $params['id'] ?? null;
+
+        // Validar que sea un ID numérico válido
+        if (!$postId || !is_numeric($postId)) {
             http_response_code(400);
-            echo json_encode(['error' => 'ID inválido']);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'ID inválido o faltante']);
             return;
         }
 
@@ -228,26 +203,28 @@ if (
                 FROM publicaciones p
                 JOIN users u ON p.idUsuario = u.idUsuario
                 LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
-                WHERE p.idPublicacion = ?
+                WHERE p.idPublicacion = ? AND p.estado = 'publico'
             ", [$postId])->find();
 
             if (!$post) {
                 http_response_code(404);
+                header('Content-Type: application/json');
                 echo json_encode(['error' => 'Publicación no encontrada']);
                 return;
             }
 
             // ✅ Respuesta en formato JSON
             header('Content-Type: application/json');
-            echo json_encode($post, JSON_UNESCAPED_UNICODE);
+            echo json_encode($post, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         } catch (\Exception $e) {
             http_response_code(500);
+            header('Content-Type: application/json');
             echo json_encode(['error' => 'Error interno', 'detalles' => $e->getMessage()]);
         }
     }
 
-        /**
+    /**
      * ❤️ Dar o quitar "like" a una publicación (AJAX)
      */
     public function like()
@@ -317,4 +294,34 @@ if (
         }
     }
 
+    // === FUNCIONES PRIVADAS ===
+    private function handleImageUpload($file)
+    {
+        if ($file['error'] === 4) return null;
+        if ($file['size'] > 5 * 1024 * 1024) return false;
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) return false;
+
+        $dir = 'imagenes/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
+        $path = $dir . $name;
+
+        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
+    }
+
+    private function handleVideoUpload($file)
+    {
+        if ($file['error'] === 4) return null;
+        if ($file['size'] > 50 * 1024 * 1024) return false;
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, ['video/mp4', 'video/quicktime', 'video/x-msvideo'])) return false;
+
+        $dir = 'videos/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
+        $path = $dir . $name;
+
+        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
+    }
 }

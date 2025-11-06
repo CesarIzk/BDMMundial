@@ -109,49 +109,8 @@
 </div>
 
 <script>
+// ==== MODAL DETALLE ==== (VERSIÓN MEJORADA)
 document.addEventListener("DOMContentLoaded", () => {
-
-  // ==== LIKE SYSTEM ====
-  const likeButtons = document.querySelectorAll('.btn-accion');
-  likeButtons.forEach(btn => {
-    btn.addEventListener('click', async function (e) {
-      e.preventDefault();
-      e.stopPropagation(); // evita que abra el modal
-
-      const postId = this.dataset.postId;
-      const likeCount = this.querySelector('.like-count');
-      if (!postId) return;
-
-      try {
-        const formData = new FormData();
-        formData.append('postId', postId);
-
-        const res = await fetch('/Post/like', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            alert('Debes iniciar sesión para dar like');
-            return;
-          }
-          throw new Error('Error al procesar like');
-        }
-
-        const data = await res.json();
-        if (data.success) {
-          likeCount.textContent = data.likes;
-          this.classList.toggle('liked', data.accion === 'liked');
-        }
-      } catch (err) {
-        console.error('Error de conexión:', err);
-      }
-    });
-  });
-
-
-  // ==== MODAL DETALLE ====
   const modal = document.getElementById('modal-post');
   const modalBody = document.getElementById('modal-body');
   const modalClose = document.querySelector('.zzz-close');
@@ -160,87 +119,86 @@ document.addEventListener("DOMContentLoaded", () => {
     card.addEventListener('click', async e => {
       // Evita abrir si clickeas el botón de like
       if (e.target.closest('.btn-accion')) return;
+      
       const postId = card.dataset.postId;
       if (!postId) return;
 
+      // Mostrar loading
+      modalBody.innerHTML = '<div style="text-align:center;padding:3rem;"><i class="fas fa-spinner fa-spin fa-3x"></i></div>';
+      modal.style.display = 'flex';
+
       try {
-        const res = await fetch(`/Post/${postId}`);
-        if (!res.ok) throw new Error('Error al cargar la publicación');
+        // 🔧 OPCIÓN A: Intenta primero con query params
+        let res = await fetch(`/Post/view?id=${postId}`);
+        
+        // 🔧 OPCIÓN B: Si falla, intenta con la ruta dinámica
+        if (!res.ok) {
+          res = await fetch(`/Post/${postId}`);
+        }
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const post = await res.json();
 
+        // Construir contenido del modal
+        let mediaHTML = '';
+        if (post.rutamulti) {
+          if (post.tipoContenido === 'imagen') {
+            mediaHTML = `<img src="${post.rutamulti}" alt="Imagen" style="max-width:100%;height:auto;border-radius:8px;">`;
+          } else {
+            mediaHTML = `<video controls style="max-width:100%;height:auto;border-radius:8px;">
+                          <source src="${post.rutamulti}" type="video/mp4">
+                        </video>`;
+          }
+        } else {
+          mediaHTML = '<div style="background:#333;padding:3rem;text-align:center;border-radius:8px;">Sin multimedia</div>';
+        }
+
         modalBody.innerHTML = `
-          ${post.rutamulti ? (
-            post.tipoContenido === 'imagen'
-              ? `<img src="${post.rutamulti}" alt="Imagen">`
-              : `<video controls><source src="${post.rutamulti}" type="video/mp4"></video>`
-          ) : '<div style="background:#333;padding:3rem;text-align:center;">Sin multimedia</div>'}
-          <h3 class="mt-3">${post.username}</h3>
-          <p>${post.texto}</p>
-          <p><strong>${post.likes}</strong> Likes</p>
-          <button class="btn btn-secondary mt-2" onclick="window.location.href='/publicaciones'">Ver más publicaciones</button>
+          ${mediaHTML}
+          <div style="padding:1.5rem 0;">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+              ${post.fotoPerfil ? `<img src="${post.fotoPerfil}" alt="${post.username}" style="width:50px;height:50px;border-radius:50%;">` : ''}
+              <div>
+                <h3 style="margin:0;">${post.Nombre || post.username}</h3>
+                <p style="margin:0;color:#888;">@${post.username}</p>
+              </div>
+            </div>
+            <p style="font-size:1.1rem;line-height:1.6;">${post.texto}</p>
+            <div style="display:flex;gap:2rem;margin-top:1rem;color:#888;">
+              <span><i class="fas fa-heart"></i> <strong>${post.likes}</strong> Likes</span>
+              <span><i class="fas fa-tag"></i> ${post.categoriaNombre || 'Sin categoría'}</span>
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3" onclick="window.location.href='/publicaciones'">
+            Ver más publicaciones
+          </button>
         `;
 
-        modal.style.display = 'flex';
       } catch (err) {
-        console.error(err);
-        alert('Error al abrir publicación.');
+        console.error('❌ Error al cargar publicación:', err);
+        modalBody.innerHTML = `
+          <div style="text-align:center;padding:3rem;">
+            <i class="fas fa-exclamation-triangle fa-3x" style="color:#e74c3c;"></i>
+            <h3 style="margin-top:1rem;">Error al cargar la publicación</h3>
+            <p style="color:#888;">${err.message}</p>
+            <button class="btn btn-secondary mt-3" onclick="document.getElementById('modal-post').style.display='none'">
+              Cerrar
+            </button>
+          </div>
+        `;
       }
     });
   });
 
   // Cerrar modal
   modalClose.addEventListener('click', () => modal.style.display = 'none');
-  window.addEventListener('click', e => { if (e.target.id === 'modal-post') modal.style.display = 'none'; });
-}
-
-);
-// === LAZY LOAD ===
-document.addEventListener("DOMContentLoaded", () => {
-  const grid = document.querySelector('.zzz-grid');
-  const trigger = document.getElementById('load-more-trigger');
-
-  if (!grid || !trigger) return;
-
-  let currentPage = <?= $currentPage ?>;
-  const totalPages = <?= $totalPages ?>;
-  let isLoading = false;
-
-  const loadMore = async () => {
-    if (isLoading || currentPage >= totalPages) return;
-    isLoading = true;
-
-    const nextPage = currentPage + 1;
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', nextPage);
-
-    try {
-      const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      const html = await res.text();
-
-      // Extraer solo las nuevas tarjetas
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const newCards = doc.querySelectorAll('.zzz-card');
-
-      newCards.forEach(card => grid.appendChild(card));
-      currentPage++;
-    } catch (err) {
-      console.error('❌ Error al cargar más publicaciones:', err);
-    } finally {
-      isLoading = false;
-    }
-  };
-
-  // Usamos IntersectionObserver para detectar cuando llega al final
-  const observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) {
-      loadMore();
-    }
-  }, { rootMargin: '200px' });
-
-  observer.observe(trigger);
+  window.addEventListener('click', e => { 
+    if (e.target.id === 'modal-post') modal.style.display = 'none'; 
+  });
 });
-
 </script>
 
 <?php require 'partials/footer.php'; ?>
