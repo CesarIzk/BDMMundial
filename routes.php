@@ -72,5 +72,3 @@ $router->get('/api/comentarios/{id}', 'Controles\Api\ComentarioController@index'
 $router->post('/api/comentarios', 'Controles\Api\ComentarioController@store');     // crear comentario
 $router->delete('/api/comentarios/{id}', 'Controles\Api\ComentarioController@delete'); // eliminar comentario
 
-$router->get('/Post/{id}', 'Api\PostController@show');
-$router->post('/Post/like', 'Api\PostController@like');
