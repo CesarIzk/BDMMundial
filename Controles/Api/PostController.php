@@ -115,42 +115,37 @@ class PostController
         return view('CrearPublicacion.php', ['categorias' => $categorias]);
     }
 
-    /**
-     * Crear nueva publicación
-     */
-    /**
- * Crear nueva publicación
- */
-/**
- * Crear nueva publicación
- * VERSIÓN CORREGIDA CON DEBUG
- */
+
 /**
  * Crear nueva publicación
  */
 public function store()
 {
-    // ⚠️ NO iniciar sesión aquí - ya está iniciada en index.php
-    // La sesión DEBE estar iniciada antes de cualquier output
-    
-    // ✅ Establecer header JSON inmediatamente
-    header('Content-Type: application/json');
+    // ✅ Establecer header JSON INMEDIATAMENTE
+    header('Content-Type: application/json; charset=utf-8');
 
-    // 🔍 DEBUG: Verificar sesión
-    error_log("=== POST STORE DEBUG ===");
-    error_log("Session ID: " . session_id());
-    error_log("Session status: " . session_status());
-    error_log("User exists: " . (isset($_SESSION['user']) ? 'YES' : 'NO'));
-    if (isset($_SESSION['user'])) {
-        error_log("User ID: " . $_SESSION['user']['idUsuario']);
+    // 🔍 Verificar que la sesión esté iniciada
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        error_log("ERROR: Sesión no activa");
+        http_response_code(500);
+        echo json_encode(['error' => 'Error de sesión del servidor']);
+        exit;
     }
+
+    // 🔍 DEBUG
+    error_log("=== POST STORE ===");
+    error_log("Session ID: " . session_id());
+    error_log("Session active: " . (session_status() === PHP_SESSION_ACTIVE ? 'YES' : 'NO'));
+    error_log("User in session: " . (isset($_SESSION['user']) ? 'YES' : 'NO'));
 
     // 🔐 Verificar autenticación
     if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
-        error_log("ERROR: No autenticado - Session data: " . print_r($_SESSION, true));
+        error_log("ERROR: Usuario no autenticado");
+        error_log("Session contents: " . print_r($_SESSION, true));
         http_response_code(401);
         echo json_encode([
-            'error' => 'No autenticado. Por favor inicia sesión.',
+            'error' => 'No autenticado',
+            'message' => 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.',
             'redirect' => '/'
         ]);
         exit;
@@ -163,10 +158,10 @@ public function store()
         exit;
     }
 
-    $idUsuario = $_SESSION['user']['idUsuario'];
-    error_log("✅ Usuario autenticado: ID = $idUsuario");
+    $idUsuario = (int)$_SESSION['user']['idUsuario'];
+    error_log("✅ Usuario autenticado - ID: $idUsuario");
 
-    // 🔍 Verificar estado del usuario
+    // 🔍 Verificar que el usuario existe y está activo
     try {
         $user = $this->db->query(
             "SELECT estado FROM users WHERE idUsuario = ?", 
@@ -174,7 +169,7 @@ public function store()
         )->find();
 
         if (!$user) {
-            error_log("ERROR: Usuario ID $idUsuario no encontrado en BD");
+            error_log("ERROR: Usuario $idUsuario no encontrado en BD");
             http_response_code(403);
             echo json_encode(['error' => 'Usuario no encontrado']);
             exit;
@@ -183,7 +178,7 @@ public function store()
         if ($user['estado'] !== 'activo') {
             error_log("ERROR: Usuario inactivo - Estado: " . $user['estado']);
             http_response_code(403);
-            echo json_encode(['error' => 'Cuenta inactiva o suspendida']);
+            echo json_encode(['error' => 'Tu cuenta está inactiva']);
             exit;
         }
 
@@ -194,11 +189,10 @@ public function store()
         exit;
     }
 
-    // 📝 Obtener y validar datos
+    // 📝 Validar datos del formulario
     $texto = trim($_POST['texto'] ?? '');
     $tipo = $_POST['tipo'] ?? 'texto';
     $idCategoria = $_POST['idCategoria'] ?? null;
-    $archivoRuta = null;
 
     if (empty($texto)) {
         http_response_code(400);
@@ -206,44 +200,65 @@ public function store()
         exit;
     }
 
-    if (!$idCategoria || !is_numeric($idCategoria)) {
+    if (strlen($texto) > 500) {
         http_response_code(400);
-        echo json_encode(['error' => 'Debe seleccionar una categoría válida']);
+        echo json_encode(['error' => 'El texto no puede exceder 500 caracteres']);
         exit;
     }
 
-    // 📁 Manejo de archivos
-    if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
-        if ($archivoRuta === false) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Error al subir la imagen']);
-            exit;
-        }
-    } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $archivoRuta = $this->handleVideoUpload($_FILES['video']);
-        if ($archivoRuta === false) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Error al subir el video']);
-            exit;
-        }
+    if (!$idCategoria || !is_numeric($idCategoria)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Debes seleccionar una categoría válida']);
+        exit;
     }
 
-    // 💾 Insertar en base de datos
+    // 📁 Manejo de archivos multimedia
+    $archivoRuta = null;
+
+    if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
+        error_log("Procesando imagen...");
+        $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
+        
+        if ($archivoRuta === false) {
+            error_log("ERROR: Fallo al subir imagen");
+            http_response_code(400);
+            echo json_encode(['error' => 'Error al subir la imagen. Verifica formato (JPG, PNG, GIF) y tamaño (máx. 5MB)']);
+            exit;
+        }
+        error_log("✅ Imagen subida: $archivoRuta");
+        
+    } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
+        error_log("Procesando video...");
+        $archivoRuta = $this->handleVideoUpload($_FILES['video']);
+        
+        if ($archivoRuta === false) {
+            error_log("ERROR: Fallo al subir video");
+            http_response_code(400);
+            echo json_encode(['error' => 'Error al subir el video. Verifica formato (MP4, MOV, AVI) y tamaño (máx. 50MB)']);
+            exit;
+        }
+        error_log("✅ Video subido: $archivoRuta");
+    }
+
+    // 💾 Insertar publicación en la base de datos
     try {
+        error_log("Insertando publicación en BD...");
+        
         $this->db->query(
             "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
              VALUES (?, ?, ?, ?, ?, 'publico', NOW())",
             [
-                $idUsuario, 
-                $idCategoria, 
-                htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'), 
-                $tipo, 
+                $idUsuario,
+                (int)$idCategoria,
+                htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'),
+                $tipo,
                 $archivoRuta
             ]
         );
 
-        error_log("✅ Publicación creada exitosamente por usuario $idUsuario");
+        error_log("✅ Publicación creada exitosamente - Usuario: $idUsuario");
+
+        // ✅ Respuesta exitosa
         http_response_code(200);
         echo json_encode([
             'success' => true,
@@ -252,16 +267,17 @@ public function store()
 
     } catch (\Exception $e) {
         error_log("ERROR al insertar publicación: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        
         http_response_code(500);
         echo json_encode([
-            'error' => 'Error al crear la publicación',
-            'detalles' => $e->getMessage()
+            'error' => 'Error al guardar la publicación',
+            'message' => 'No se pudo guardar la publicación. Intenta nuevamente.'
         ]);
     }
 
     exit;
-}
-    /**
+}  /**
      * 📄 Mostrar publicación individual (para el modal)
      * @param array $params Parámetros de la ruta (ejemplo: ['id' => '7'])
      */

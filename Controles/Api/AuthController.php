@@ -40,7 +40,7 @@ class AuthController
             return $this->redirectWithError('Email o contraseña incorrectos');
         }
 
-        // Verificar contraseña (comparación simple)
+        // Verificar contraseña
         if ($user['contrasena'] !== $password) {
             return $this->redirectWithError('Email o contraseña incorrectos');
         }
@@ -50,21 +50,43 @@ class AuthController
             return $this->redirectWithError('Tu cuenta ha sido desactivada');
         }
 
-        // Crear sesión (ya iniciada en index.php)
+        // ✅ CRÍTICO: Regenerar ID de sesión para prevenir session fixation
+        session_regenerate_id(true);
+
+        // ✅ Crear sesión con todos los datos necesarios
         $_SESSION['user'] = [
-            'idUsuario' => $user['idUsuario'],
+            'idUsuario' => (int)$user['idUsuario'],
             'Nombre' => $user['Nombre'],
             'email' => $user['email'],
             'username' => $user['username'],
             'rol' => $user['rol'],
-            'fotoPerfil' => $user['fotoPerfil']
+            'fotoPerfil' => $user['fotoPerfil'],
+            'estado' => $user['estado']
         ];
 
-        // Actualizar última actividad
-        $this->db->query(
-            'UPDATE users SET ultimaActividad = NOW() WHERE idUsuario = ?',
-            [$user['idUsuario']]
-        );
+        // ✅ Marcar tiempo de login
+        $_SESSION['login_time'] = time();
+        $_SESSION['last_activity'] = time();
+
+        // 🔍 DEBUG LOG
+        error_log("=== LOGIN EXITOSO ===");
+        error_log("User ID: " . $user['idUsuario']);
+        error_log("Session ID: " . session_id());
+        error_log("Session data: " . print_r($_SESSION['user'], true));
+
+        // Actualizar última actividad en BD
+        try {
+            $this->db->query(
+                'UPDATE users SET ultimaActividad = NOW() WHERE idUsuario = ?',
+                [$user['idUsuario']]
+            );
+        } catch (\Exception $e) {
+            error_log("Error actualizando última actividad: " . $e->getMessage());
+        }
+
+        // ✅ Asegurar que la sesión se escriba antes de redirigir
+        session_write_close();
+        session_start(); // Reabrir para la siguiente petición
 
         // Redirigir según rol
         if ($user['rol'] === 'admin') {
@@ -124,7 +146,7 @@ class AuthController
             $username = strtolower(str_replace(' ', '', $nombreCom)) . rand(1000, 9999);
         }
 
-        // Insertar usuario sin hash
+        // Insertar usuario
         try {
             $this->db->query(
                 'INSERT INTO users (Nombre, email, username, contrasena, pais, rol, estado)
@@ -138,18 +160,41 @@ class AuthController
                 [$email]
             )->find();
 
-            // Crear sesión automáticamente (ya iniciada en index.php)
+            if (!$newUser) {
+                return $this->redirectWithError('Error al crear la cuenta');
+            }
+
+            // ✅ Regenerar ID de sesión
+            session_regenerate_id(true);
+
+            // ✅ Crear sesión automáticamente
             $_SESSION['user'] = [
-                'idUsuario' => $newUser['idUsuario'],
+                'idUsuario' => (int)$newUser['idUsuario'],
                 'Nombre' => $newUser['Nombre'],
                 'email' => $newUser['email'],
                 'username' => $newUser['username'],
                 'rol' => $newUser['rol'],
-                'fotoPerfil' => $newUser['fotoPerfil']
+                'fotoPerfil' => $newUser['fotoPerfil'],
+                'estado' => $newUser['estado']
             ];
 
+            // ✅ Marcar tiempo de registro
+            $_SESSION['login_time'] = time();
+            $_SESSION['last_activity'] = time();
+
+            // 🔍 DEBUG LOG
+            error_log("=== REGISTRO EXITOSO ===");
+            error_log("User ID: " . $newUser['idUsuario']);
+            error_log("Session ID: " . session_id());
+
+            // ✅ Asegurar que la sesión se escriba
+            session_write_close();
+            session_start();
+
             return redirect('/');
+
         } catch (\Exception $e) {
+            error_log("Error en registro: " . $e->getMessage());
             return $this->redirectWithError('Error al registrar el usuario');
         }
     }
@@ -159,7 +204,19 @@ class AuthController
      */
     public function logout()
     {
+        // ✅ Limpiar datos de sesión
+        $_SESSION = [];
+
+        // ✅ Destruir la cookie de sesión
+        if (isset($_COOKIE[session_name()])) {
+            setcookie(session_name(), '', time() - 3600, '/');
+        }
+
+        // ✅ Destruir sesión
         session_destroy();
+
+        error_log("=== LOGOUT EXITOSO ===");
+
         return redirect('/');
     }
 
@@ -169,6 +226,11 @@ class AuthController
     private function redirectWithError($message)
     {
         $_SESSION['error'] = $message;
+        
+        // ✅ Asegurar que el error se guarde en sesión
+        session_write_close();
+        session_start();
+        
         header('Location: /#authModal');
         exit;
     }
