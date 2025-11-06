@@ -4,3 +4,15 @@ vendor/
 .idea/
 *.log
 node_modules/
+# Ignorar todos los archivos dentro de uploads
+*
+
+# Pero NO ignorar este .gitignore (para mantener la carpeta)
+!.gitignore
+
+# Opcionalmente, si quieres mantener subcarpetas vacías
+!avatars/
+!posts/
+!posts/imagenes/
+!uploads
+!posts/videos/
