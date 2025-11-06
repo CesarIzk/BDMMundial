@@ -3,7 +3,6 @@ namespace Controles\Api;
 
 use Core\App;
 
-
 class PaisController
 {
     protected $db;
@@ -13,6 +12,17 @@ class PaisController
         $this->db = App::resolve('Core\Database');
     }
 
+    // ✅ LISTAR TODOS LOS PAÍSES DISPONIBLES
+    public function index()
+    {
+        $paises = $this->db->query("SELECT * FROM paises ORDER BY nombre ASC")->get();
+
+        return view('equipo.php', [
+            'paises' => $paises
+        ]);
+    }
+
+    // ✅ MOSTRAR DETALLE DE UN PAÍS
     public function show($params)
     {
         $codigo = $params['pais'] ?? null;
@@ -23,7 +33,9 @@ class PaisController
         )->find();
 
         if (!$pais) {
-            abort(404); // puedes usar tu helper de errores
+            return view('404.php', [
+                'mensaje' => "El país solicitado no existe en la base de datos."
+            ]);
         }
 
         $imagenes = $this->db->query(

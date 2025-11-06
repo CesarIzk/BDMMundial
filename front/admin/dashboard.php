@@ -7,6 +7,8 @@
 
     <!-- Tarjetas de Estadísticas -->
     <div class="row g-4 mb-4">
+
+        <!-- Total Usuarios -->
         <div class="col-md-3">
             <div class="card text-white bg-primary">
                 <div class="card-body">
@@ -22,6 +24,7 @@
             </div>
         </div>
 
+        <!-- Publicaciones -->
         <div class="col-md-3">
             <div class="card text-white bg-success">
                 <div class="card-body">
@@ -37,6 +40,7 @@
             </div>
         </div>
 
+        <!-- Usuarios Activos -->
         <div class="col-md-3">
             <div class="card text-white bg-info">
                 <div class="card-body">
@@ -52,6 +56,7 @@
             </div>
         </div>
 
+        <!-- Contenido Oculto -->
         <div class="col-md-3">
             <div class="card text-white bg-warning">
                 <div class="card-body">
@@ -66,10 +71,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- 💬 Comentarios Totales -->
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">Comentarios Totales</h6>
+                            <h2 class="card-title mb-0"><?= $stats['totalComentarios'] ?? 0 ?></h2>
+                        </div>
+                        <i class="fas fa-comments fa-3x opacity-50"></i>
+                    </div>
+                    <small>Actualizados automáticamente</small>
+                </div>
+            </div>
+        </div>
+
     </div>
 
+    <!-- 📈 Gráfico de Actividad -->
     <div class="row g-4">
-        <!-- Gráfico de Actividad -->
         <div class="col-md-8">
             <div class="card shadow">
                 <div class="card-header">
@@ -81,7 +103,7 @@
             </div>
         </div>
 
-        <!-- Top Usuarios -->
+        <!-- 🌟 Top Usuarios -->
         <div class="col-md-4">
             <div class="card shadow">
                 <div class="card-header">
@@ -109,7 +131,7 @@
         </div>
     </div>
 
-    <!-- Actividad Reciente -->
+    <!-- 🕒 Actividad Reciente -->
     <div class="row g-4 mt-2">
         <div class="col-12">
             <div class="card shadow">
@@ -174,9 +196,7 @@ new Chart(ctx, {
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
-            legend: {
-                position: 'top',
-            }
+            legend: { position: 'top' }
         }
     }
 });

@@ -131,10 +131,10 @@
                         <?php foreach ($detallesDiarios ?? [] as $dia): ?>
                         <tr>
                             <td><?= date('d/m/Y', strtotime($dia['fecha'])) ?></td>
-                            <td><?= $dia['nuevosUsuarios'] ?></td>
-                            <td><?= $dia['nuevasPublicaciones'] ?></td>
-                            <td><?= $dia['totalLikes'] ?></td>
-                            <td><?= $dia['usuariosActivos'] ?></td>
+                            <td><?= $dia['nuevosUsuarios'] ?? 0 ?></td>
+                            <td><?= $dia['nuevasPublicaciones'] ?? 0 ?></td>
+                            <td><?= $dia['totalLikes'] ?? 0 ?></td>
+                            <td><?= $dia['usuariosActivos'] ?? 0 ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

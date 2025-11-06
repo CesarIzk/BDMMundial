@@ -12,7 +12,7 @@
       <div class="card-body p-4">
         <div class="row align-items-center">
           <!-- Avatar -->
-          <div class="col-md-4 text-center mb-4 mb-md-0">
+          <div class="col-md-4 d-flex justify-content-center align-items-center mb-4 mb-md-0">
             <?php if (!empty($userData['fotoPerfil'])): ?>
               <img src="<?php echo htmlspecialchars($userData['fotoPerfil']); ?>" 
                    alt="Avatar" 

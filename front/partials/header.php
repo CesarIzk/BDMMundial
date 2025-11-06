@@ -44,16 +44,13 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
         <li><a href="/publicaciones"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
         <li><a href="/stats"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
         <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
-        
-        <?php if ($isAdmin): ?>
-          <li><a href="/admin/usuarios" style="color: #00aaff;"><i class="fas fa-users-cog"></i> <span>Admin</span></a></li>
-        <?php endif; ?>
+  
       </ul>
     
 
       <div class="auth-buttons">
         <?php if ($isLoggedIn): ?>
-          <a href="/Post/crear" class="btn-crear-post" title="Nueva Publicación">
+          <a href="/Post/create" class="btn-crear-post" title="Nueva Publicación">
             <i class="fas fa-plus-circle"></i> <span>Publicar</span>
           </a>
         <?php endif; ?>
@@ -64,16 +61,34 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
 
     <?php if ($isLoggedIn): ?>
   <div class="dropdown">
-    <button class="btn btn-sm user-profile" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-      <div class="user-avatar">
-        <?php echo strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)); ?>
-      </div>
-      <span class="d-none d-md-inline"><?php echo htmlspecialchars($user['Nombre'] ?? 'Usuario'); ?></span>
-      <i class="fas fa-chevron-down ms-1"></i>
+    <button class="btn btn-sm user-profile d-flex align-items-center gap-2" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+
+      <!-- 🧑 AVATAR o INICIAL -->
+      <?php if (!empty($user['fotoPerfil'])): ?>
+        <img src="<?= htmlspecialchars($user['fotoPerfil']) ?>"
+             alt="Avatar de <?= htmlspecialchars($user['Nombre'] ?? 'Usuario') ?>"
+             class="rounded-circle shadow-sm border border-primary"
+             style="width: 36px; height: 36px; object-fit: cover;">
+      <?php else: ?>
+        <div class="user-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+             style="width: 36px; height: 36px; font-size: 1rem;">
+          <?= strtoupper(substr($user['Nombre'] ?? 'U', 0, 1)) ?>
+        </div>
+      <?php endif; ?>
+
+      <!-- 🧾 NOMBRE + ICONO -->
+      <span class="d-none d-md-inline fw-semibold"><?= htmlspecialchars($user['Nombre'] ?? 'Usuario') ?></span>
+      <i class="fas fa-chevron-down ms-1 text-muted"></i>
     </button>
-    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-      <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user me-2"></i> Mi Perfil</a></li>
-      <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog me-2"></i> Configuración</a></li>
+
+    <!-- 🔽 MENÚ DESPLEGABLE -->
+    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+      <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user me-2 text-primary"></i> Mi Perfil</a></li>
+      <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog me-2 text-secondary"></i> Configuración</a></li>
+      <?php if ($isAdmin): ?>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-shield-alt me-2 text-info"></i> Panel Admin</a></li>
+      <?php endif; ?>
       <li><hr class="dropdown-divider"></li>
       <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a></li>
     </ul>
@@ -83,6 +98,7 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
     <i class="fas fa-sign-in-alt me-1"></i> <span class="d-none d-md-inline">Ingresar</span>
   </button>
 <?php endif; ?>
+
 
 
       </div>

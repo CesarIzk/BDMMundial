@@ -14,64 +14,104 @@ class PostController
     }
 
     /**
-     * Obtener todas las publicaciones o las de un usuario específico
+     * 🔍 Listar publicaciones con búsqueda, filtro y paginación
      */
     public function index()
     {
-        $page = (int)($_GET['page'] ?? 1);
+        $categoria = $_GET['categoria'] ?? '';
+        $orden = $_GET['orden'] ?? 'reciente';
+        $busqueda = trim($_GET['q'] ?? '');
+        $page = max((int)($_GET['page'] ?? 1), 1);
         $limit = 10;
         $offset = ($page - 1) * $limit;
-        $userId = $_GET['user'] ?? null;
 
-        if ($userId) {
-            // Publicaciones de un usuario específico
-            $posts = $this->db->query(
-                "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-                 FROM publicaciones p
-                 JOIN users u ON p.idUsuario = u.idUsuario 
-                 WHERE p.idUsuario = ? AND p.estado = 'publico'
-                 ORDER BY p.postdate DESC 
-                 LIMIT $limit OFFSET $offset",
-                [$userId]
-            )->get();
+        // Base query
+        $sql = "SELECT p.*, u.Nombre, u.username, u.fotoPerfil, c.nombre AS categoriaNombre
+                FROM publicaciones p
+                JOIN users u ON p.idUsuario = u.idUsuario
+                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                WHERE p.estado = 'publico'";
+        $params = [];
 
-            $total = $this->db->query(
-                "SELECT COUNT(*) as count FROM publicaciones WHERE idUsuario = ? AND estado = 'publico'",
-                [$userId]
-            )->find()['count'];
-        } else {
-            // Todas las publicaciones públicas
-            $posts = $this->db->query(
-                "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-                 FROM publicaciones p
-                 JOIN users u ON p.idUsuario = u.idUsuario 
-                 WHERE p.estado = 'publico'
-                 ORDER BY p.postdate DESC 
-                 LIMIT $limit OFFSET $offset"
-            )->get();
-
-            $total = $this->db->query(
-                "SELECT COUNT(*) as count FROM publicaciones WHERE estado = 'publico'"
-            )->find()['count'];
+        // 🔹 Filtro por categoría
+        if (!empty($categoria)) {
+            $sql .= " AND p.idCategoria = ?";
+            $params[] = $categoria;
         }
 
-        $pages = ceil($total / $limit);
-
-        if ($this->isJson()) {
-            echo json_encode([
-                'posts' => $posts,
-                'currentPage' => $page,
-                'totalPages' => $pages,
-                'total' => $total
-            ]);
-        } else {
-            return view('Post.php', [
-                'publicaciones' => $posts,
-                'currentPage' => $page,
-                'totalPages' => $pages,
-                'total' => $total
-            ]);
+        // 🔹 Filtro por búsqueda (texto, usuario, nombre o categoría)
+        if (!empty($busqueda)) {
+            $sql .= " AND (p.texto LIKE ? OR u.username LIKE ? OR u.Nombre LIKE ? OR c.nombre LIKE ?)";
+            $params = array_merge($params, array_fill(0, 4, "%$busqueda%"));
         }
+
+        // 🔹 Orden
+        if ($orden === 'populares') {
+            $sql .= " ORDER BY p.likes DESC";
+        } else {
+            $sql .= " ORDER BY p.postdate DESC";
+        }
+
+        $sql .= " LIMIT $limit OFFSET $offset";
+        $posts = $this->db->query($sql, $params)->get();
+
+        // 🔹 Obtener categorías
+        $categorias = $this->db->query("SELECT idCategoria, nombre FROM categorias ORDER BY nombre ASC")->get();
+
+        // 🔹 Conteo total
+        $countSql = "SELECT COUNT(*) AS total
+                     FROM publicaciones p
+                     JOIN users u ON p.idUsuario = u.idUsuario
+                     LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                     WHERE p.estado = 'publico'";
+        $countParams = [];
+
+        if (!empty($categoria)) {
+            $countSql .= " AND p.idCategoria = ?";
+            $countParams[] = $categoria;
+        }
+        if (!empty($busqueda)) {
+            $countSql .= " AND (p.texto LIKE ? OR u.username LIKE ? OR u.Nombre LIKE ? OR c.nombre LIKE ?)";
+            $countParams = array_merge($countParams, array_fill(0, 4, "%$busqueda%"));
+        }
+
+        $total = $this->db->query($countSql, $countParams)->find()['total'] ?? 0;
+        $pages = max(ceil($total / $limit), 1);
+// 🔹 Si es AJAX (lazy load)
+if (
+    isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+) {
+    // Solo renderizamos las tarjetas
+    foreach ($posts as $post) {
+        require base_path('views/partials/postCard.php');
+    }
+    return;
+}
+
+        // 🔹 Renderizar vista
+        return view('Post.php', [
+            'publicaciones' => $posts,
+            'categorias' => $categorias,
+            'categoriaSeleccionada' => $categoria,
+            'orden' => $orden,
+            'busqueda' => $busqueda,
+            'currentPage' => $page,
+            'totalPages' => $pages,
+            'total' => $total
+        ]);
+    }
+
+    /**
+     * Mostrar formulario de creación
+     */
+    public function create()
+    {
+        $categorias = $this->db->query("
+            SELECT idCategoria, nombre FROM categorias ORDER BY nombre ASC
+        ")->get();
+
+        return view('CrearPublicacion.php', ['categorias' => $categorias]);
     }
 
     /**
@@ -79,8 +119,8 @@ class PostController
      */
     public function store()
     {
+        if (session_status() === PHP_SESSION_NONE) session_start();
 
-        // Verificar autenticación
         if (!isset($_SESSION['user'])) {
             http_response_code(401);
             echo json_encode(['error' => 'No autenticado']);
@@ -93,101 +133,128 @@ class PostController
             return;
         }
 
-        $texto = trim($_POST['texto'] ?? $_POST['contenido'] ?? '');
-        $tipo = $_POST['tipo'] ?? null;
         $idUsuario = $_SESSION['user']['idUsuario'];
+        $user = $this->db->query("SELECT estado FROM users WHERE idUsuario = ?", [$idUsuario])->find();
+
+        if (!$user || $user['estado'] !== 'activo') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Cuenta inactiva o suspendida']);
+            return;
+        }
+
+        $texto = trim($_POST['texto'] ?? '');
+        $tipo = $_POST['tipo'] ?? 'texto';
+        $idCategoria = $_POST['idCategoria'] ?? null;
         $archivoRuta = null;
 
-        // Validar contenido
         if (empty($texto)) {
             http_response_code(400);
             echo json_encode(['error' => 'El contenido es obligatorio']);
             return;
         }
 
-        if (strlen($texto) > 500) {
+        if (!$idCategoria) {
             http_response_code(400);
-            echo json_encode(['error' => 'El texto no puede exceder 500 caracteres']);
+            echo json_encode(['error' => 'Debe seleccionar una categoría']);
             return;
         }
 
-        // Procesar archivo de imagen
         if ($tipo === 'imagen' && isset($_FILES['imagen'])) {
             $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
-            if (!$archivoRuta && $_FILES['imagen']['error'] !== 4) {
-                return; // Error ya manejado en handleImageUpload
-            }
-        }
-        // Procesar archivo de video
-        elseif ($tipo === 'video' && isset($_FILES['video'])) {
+        } elseif ($tipo === 'video' && isset($_FILES['video'])) {
             $archivoRuta = $this->handleVideoUpload($_FILES['video']);
-            if (!$archivoRuta && $_FILES['video']['error'] !== 4) {
-                return; // Error ya manejado en handleVideoUpload
-            }
         }
 
         try {
-            // Insertar publicación
             $this->db->query(
-                "INSERT INTO publicaciones (idUsuario, texto, tipoContenido, rutamulti, estado, postdate) 
-                 VALUES (?, ?, ?, ?, ?, NOW())",
-                [
-                    $idUsuario,
-                    htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'),
-                    $tipo,
-                    $archivoRuta,
-                    'publico'
-                ]
+                "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
+                 VALUES (?, ?, ?, ?, ?, 'publico', NOW())",
+                [$idUsuario, $idCategoria, htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'), $tipo, $archivoRuta]
             );
 
-            http_response_code(201);
             echo json_encode(['success' => true, 'message' => 'Publicación creada exitosamente']);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Error al crear la publicación']);
+            echo json_encode(['error' => 'Error al crear la publicación', 'detalles' => $e->getMessage()]);
         }
     }
 
-    /**
-     * Obtener publicación por ID
+    // === funciones privadas ===
+    private function handleImageUpload($file)
+    {
+        if ($file['error'] === 4) return null;
+        if ($file['size'] > 5 * 1024 * 1024) return false;
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) return false;
+
+        $dir = 'imagenes/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
+        $path = $dir . $name;
+
+        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
+    }
+
+    private function handleVideoUpload($file)
+    {
+        if ($file['error'] === 4) return null;
+        if ($file['size'] > 50 * 1024 * 1024) return false;
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, ['video/mp4', 'video/quicktime', 'video/x-msvideo'])) return false;
+
+        $dir = 'videos/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
+        $path = $dir . $name;
+
+        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
+    }
+        /**
+     * 📄 Mostrar publicación individual (para el modal)
      */
-  /**
- * Obtener publicación por ID
- */
-public function show($id)
-{
-    $postId = is_array($id) ? $id['id'] : $id;
-    
-    $post = $this->db->query(
-        "SELECT p.*, u.Nombre, u.username, u.fotoPerfil 
-         FROM publicaciones p
-         JOIN users u ON p.idUsuario = u.idUsuario 
-         WHERE p.idPublicacion = ?",
-        [$postId]
-    )->find();
+    public function show($id)
+    {
+        // Si viene como array (por rutas automáticas tipo /Post/{id})
+        $postId = is_array($id) ? ($id['id'] ?? null) : $id;
+        if (!$postId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID inválido']);
+            return;
+        }
 
-    if (!$post) {
-        http_response_code(404);
-        abort(404);
+        try {
+            $post = $this->db->query("
+                SELECT p.*, u.username, u.Nombre, u.fotoPerfil, c.nombre AS categoriaNombre
+                FROM publicaciones p
+                JOIN users u ON p.idUsuario = u.idUsuario
+                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                WHERE p.idPublicacion = ?
+            ", [$postId])->find();
+
+            if (!$post) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Publicación no encontrada']);
+                return;
+            }
+
+            // ✅ Respuesta en formato JSON
+            header('Content-Type: application/json');
+            echo json_encode($post, JSON_UNESCAPED_UNICODE);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Error interno', 'detalles' => $e->getMessage()]);
+        }
     }
 
-    // Si es una petición JSON (API)
-    if ($this->isJson()) {
-        header('Content-Type: application/json');
-        echo json_encode($post);
-        return;
-    }
-
-    // Si es navegador, mostrar vista
-    return view('/admin/PostDetalle.php', ['post' => $post]);
-}
-
-    /**
-     * Agregar like (AJAX)
+        /**
+     * ❤️ Dar o quitar "like" a una publicación (AJAX)
      */
     public function like()
     {
+        if (session_status() === PHP_SESSION_NONE) session_start();
 
+        // 🔐 Verificar autenticación
         if (!isset($_SESSION['user'])) {
             http_response_code(401);
             echo json_encode(['error' => 'No autenticado']);
@@ -200,162 +267,54 @@ public function show($id)
             return;
         }
 
-        // Obtener ID del POST
-        $id = $_POST['postId'] ?? null;
-        if (!$id) {
+        $idUsuario = $_SESSION['user']['idUsuario'];
+        $postId = $_POST['postId'] ?? null;
+
+        if (!$postId) {
             http_response_code(400);
-            echo json_encode(['error' => 'ID de publicación requerido']);
+            echo json_encode(['error' => 'ID de publicación faltante']);
             return;
         }
 
         try {
-            // Verificar si ya le dio like
-            $existeLike = $this->db->query(
+            // 🔍 Comprobar si ya existe el like
+            $likeExistente = $this->db->query(
                 "SELECT idLike FROM likes WHERE idUsuario = ? AND idPublicacion = ?",
-                [$_SESSION['user']['idUsuario'], $id]
+                [$idUsuario, $postId]
             )->find();
 
-            if ($existeLike) {
-                // Eliminar like
-                $this->db->query(
-                    "DELETE FROM likes WHERE idUsuario = ? AND idPublicacion = ?",
-                    [$_SESSION['user']['idUsuario'], $id]
-                );
-                
-                $this->db->query(
-                    "UPDATE publicaciones SET likes = GREATEST(likes - 1, 0) WHERE idPublicacion = ?",
-                    [$id]
-                );
-                
+            if ($likeExistente) {
+                // ❌ Eliminar like
+                $this->db->query("DELETE FROM likes WHERE idUsuario = ? AND idPublicacion = ?", [$idUsuario, $postId]);
+                $this->db->query("UPDATE publicaciones SET likes = GREATEST(likes - 1, 0) WHERE idPublicacion = ?", [$postId]);
                 $accion = 'unliked';
             } else {
-                // Agregar like
-                $this->db->query(
-                    "INSERT INTO likes (idUsuario, idPublicacion) VALUES (?, ?)",
-                    [$_SESSION['user']['idUsuario'], $id]
-                );
-                
-                $this->db->query(
-                    "UPDATE publicaciones SET likes = likes + 1 WHERE idPublicacion = ?",
-                    [$id]
-                );
-                
+                // ❤️ Agregar like
+                $this->db->query("INSERT INTO likes (idUsuario, idPublicacion) VALUES (?, ?)", [$idUsuario, $postId]);
+                $this->db->query("UPDATE publicaciones SET likes = likes + 1 WHERE idPublicacion = ?", [$postId]);
                 $accion = 'liked';
             }
 
-            $post = $this->db->query(
+            // 🔢 Obtener total actualizado
+            $nuevoTotal = $this->db->query(
                 "SELECT likes FROM publicaciones WHERE idPublicacion = ?",
-                [$id]
-            )->find();
+                [$postId]
+            )->find()['likes'] ?? 0;
 
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => true,
                 'accion' => $accion,
-                'likes' => $post['likes']
+                'likes' => $nuevoTotal
             ]);
+
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Error al procesar like']);
+            echo json_encode([
+                'error' => 'Error al procesar like',
+                'detalles' => $e->getMessage()
+            ]);
         }
     }
 
-    /**
-     * Manejo de carga de imágenes
-     */
-    private function handleImageUpload($file)
-    {
-        if ($file['error'] !== 0 && $file['error'] !== 4) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Error en la carga del archivo']);
-            return false;
-        }
-
-        if ($file['error'] === 4) {
-            return null; // No se subió archivo
-        }
-
-        if ($file['size'] > 5 * 1024 * 1024) {
-            http_response_code(400);
-            echo json_encode(['error' => 'La imagen no puede exceder 5MB']);
-            return false;
-        }
-
-        $mimeType = mime_content_type($file['tmp_name']);
-        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Tipo de imagen no permitido']);
-            return false;
-        }
-
-        $uploadDir = 'imagenes/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
-        $uploadPath = $uploadDir . $filename;
-
-        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return $uploadPath;
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => 'Error al guardar la imagen']);
-            return false;
-        }
-    }
-
-    /**
-     * Manejo de carga de videos
-     */
-    private function handleVideoUpload($file)
-    {
-        if ($file['error'] !== 0 && $file['error'] !== 4) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Error en la carga del archivo']);
-            return false;
-        }
-
-        if ($file['error'] === 4) {
-            return null; // No se subió archivo
-        }
-
-        if ($file['size'] > 50 * 1024 * 1024) {
-            http_response_code(400);
-            echo json_encode(['error' => 'El video no puede exceder 50MB']);
-            return false;
-        }
-
-        $mimeType = mime_content_type($file['tmp_name']);
-        if (!in_array($mimeType, ['video/mp4', 'video/quicktime', 'video/x-msvideo'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Tipo de video no permitido']);
-            return false;
-        }
-
-        $uploadDir = 'videos/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
-        $uploadPath = $uploadDir . $filename;
-
-        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return $uploadPath;
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => 'Error al guardar el video']);
-            return false;
-        }
-    }
-
-    /**
-     * Verificar si es una solicitud JSON
-     */
-    private function isJson()
-    {
-        return str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') || 
-               str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'application/json');
-    }
 }

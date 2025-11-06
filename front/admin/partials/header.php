@@ -41,6 +41,7 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
         <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
         <li><a href="/admin/usuarios"><i class="fas fa-users-cog"></i> <span>Usuarios</span></a></li>
         <li><a href="/admin/publicaciones"><i class="fas fa-file-alt"></i> <span>Publicaciones</span></a></li>
+        <li><a href="/admin/paises"><i class="fas fa-flag"></i> <span>Países</span></a></li>
         <li><a href="/admin/reportes"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
         <li><a href="/"><i class="fas fa-globe"></i> <span>Ver Sitio</span></a></li>
       </ul>

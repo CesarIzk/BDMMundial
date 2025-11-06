@@ -21,6 +21,8 @@
 @import url('components/modals.css');
 @import url('components/modal-custom.css');
 @import url('components/forms.css');
+@import url("components/cards-zzz.css");
+
 
 /* ===== SECTIONS ===== */
 @import url('sections/caracteristicas.css');
@@ -30,14 +32,79 @@
 @import url('sections/perfil.css');
 @import url('sections/campeonatos.css');
 @import url('sections/equipos.css');
+@import url('sections/comentarios.css');
+@import url('sections/dark-mode.css');
 
 /* ===== UTILITIES ===== */
 @import url('utils/animations.css');
 @import url('utils/slider.css');
-
+@import url('utils/dark-mode.css');
 /* ===== ESTILOS ADICIONALES PARA MODO OSCURO ===== */
-
+@import url('admin-dark.css');
 /* Ajustes de tema oscuro globales */
+
+/* === SLIDER DESTACADAS === */
+.slider-container {
+  position: relative;
+  overflow: hidden;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.slide {
+  display: none;
+}
+.slide.active {
+  display: block;
+}
+.destacado-post {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+}
+.destacado-media img,
+.destacado-media video {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 10px;
+}
+.destacado-contenido {
+  flex: 1;
+}
+.destacado-contenido p {
+  font-size: 1rem;
+  color: #555;
+}
+.btn-accion img {
+  width: 22px;
+  height: 22px;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  margin: 0 4px;
+  background: #ccc;
+  transition: background 0.3s;
+}
+.dot.active,
+.dot:hover {
+  background: #007bff;
+}
+
+/* === GRID DE PUBLICACIONES === */
+.otros-posts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.post-card {
+  transition: transform 0.2s;
+}
+.post-card:hover {
+  transform: translateY(-4px);
+}
+
 body.dark-mode .formulario {
   background: var(--card);
   border-color: var(--border);
@@ -132,9 +199,6 @@ body.dark-mode .toggle-btn {
   box-shadow: var(--shadow-md);
 }
 
-.shadow-lg {
-  box-shadow: var(--shadow-lg);
-}
 
 /* ===== CONTENIDO PRINCIPAL ===== */
 

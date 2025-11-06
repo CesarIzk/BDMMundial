@@ -54,3 +54,28 @@ function redirect($path)
         exit;
     }
 }
+
+function ensureUserActive($db)
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'No autenticado']);
+        exit;
+    }
+
+    $user = $db->query(
+        "SELECT estado FROM users WHERE idUsuario = ?",
+        [$_SESSION['user']['idUsuario']]
+    )->find();
+
+    if (!$user || $user['estado'] !== 'activo') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Tu cuenta está suspendida o desactivada.']);
+        exit;
+    }
+}
+

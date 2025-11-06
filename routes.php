@@ -7,19 +7,21 @@ $router->get('/logout', 'Controles/Api/AuthController@logout');
 
 // ========== PUBLICACIONES ==========
 $router->get('/Post', 'Controles/Api/PostController@index');
-$router->get('/Post/crear', 'controls/CrearPublicacion.php')->only('auth');
-$router->post('/Post/store', 'Controles/Api/PostController@store')->only('auth');
+$router->get('/Post/create', 'Controles\Api\PostController@create');
+$router->post('/Post/store', 'Controles\Api\PostController@store');
 $router->post('/Post/like', 'Controles/Api/PostController@like');
 $router->get('/Post/{id}', 'Controles/Api/PostController@show'); // Vista pública de un post
 
 // ========== PERFIL ==========
 $router->get('/perfil', 'controls/perfil.php')->only('auth');
 $router->get('/perfil/show', 'Controles/Api/PerfilController@show')->only('auth');
-$router->post('/perfil/update', 'Controles/Api/PerfilController@update')->only('auth');
-$router->post('/perfil/cambiar-contrasena', 'Controles/Api/PerfilController@changePassword')->only('auth');
-$router->post('/perfil/actualizar-avatar', 'Controles/Api/PerfilController@updateAvatar')->only('auth');
-$router->post('/perfil/desactivar', 'Controles/Api/PerfilController@deactivate')->only('auth');
 $router->get('/configuracion', 'Controles/Api/PerfilController@index')->only('auth');
+
+// --- Acciones del perfil ---
+$router->post('/perfil/update', 'Controles/Api/PerfilController@update')->only('auth');
+$router->post('/perfil/avatar', 'Controles/Api/PerfilController@updateAvatar')->only('auth');
+$router->post('/perfil/password', 'Controles/Api/PerfilController@changePassword')->only('auth');
+$router->post('/perfil/deactivate', 'Controles/Api/PerfilController@deactivate')->only('auth');
 
 // ========== SECCIÓN DE ADMINISTRACIÓN ==========
 $router->get('/admin/dashboard', 'Controles/Api/AdminController@dashboard')->only('admin');
@@ -35,10 +37,20 @@ $router->get('/admin/publicaciones', 'Controles/Api/AdminController@posts')->onl
 $router->post('/admin/publicaciones/{id}/ocultar', 'Controles/Api/AdminController@hidePost')->only('admin');
 $router->post('/admin/publicaciones/{id}/mostrar', 'Controles/Api/AdminController@showPost')->only('admin');
 
+// ==================== ADMIN - PAÍSES ====================
+
+// Vista general de países
+$router->get('/admin/paises', 'Controles/Api/AdminPaisController@index')->only('admin');
+// Formulario de edición
+$router->get('/admin/paises/{id}/editar', 'Controles/Api/AdminPaisController@edit')->only('admin');
+// Guardar cambios
+$router->post('/admin/paises/{id}/actualizar', 'Controles/Api/AdminPaisController@update')->only('admin');
+// Crear nuevo país
+$router->get('/admin/paises/crear', 'Controles/Api/AdminPaisController@create')->only('admin');
+$router->post('/admin/paises/store', 'Controles/Api/AdminPaisController@store')->only('admin');
 
 // ========== VISTAS PÚBLICAS ==========
 $router->get('/', 'controls/inicio.php');
-
 $router->get('/tienda', 'controls/tienda.php');
 $router->get('/stats', 'controls/stats.php');
 $router->get('/publicaciones', 'controls/Post.php');
@@ -51,6 +63,14 @@ $router->get('/campeonatos', 'Controles/Api/CampeonatoController@index');
 $router->get('/campeonatos/{anio}', 'Controles/Api/CampeonatoController@show');
 
 // ========== EQUIPOS / PAISES ==========
-$router->get('/equipos', 'controls/equipos.php');
+$router->get('/equipos', 'Controles/Api/PaisController@index');
 $router->get('/equipos/{pais}', 'Controles/Api/PaisController@show');
 
+
+// === COMENTARIOS ===
+$router->get('/api/comentarios/{id}', 'Controles\Api\ComentarioController@index'); // obtener comentarios de un post
+$router->post('/api/comentarios', 'Controles\Api\ComentarioController@store');     // crear comentario
+$router->delete('/api/comentarios/{id}', 'Controles\Api\ComentarioController@delete'); // eliminar comentario
+
+$router->get('/Post/{id}', 'Api\PostController@show');
+$router->post('/Post/like', 'Api\PostController@like');

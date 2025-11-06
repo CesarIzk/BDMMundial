@@ -19,6 +19,17 @@ require 'partials/header.php';
             ></textarea>
             <small class="contador-caracteres">0/500 caracteres</small>
         </div>
+<div class="form-group">
+    <label for="categoria">Categoría</label>
+    <select name="idCategoria" id="categoria" class="form-select" required>
+        <option value="">Selecciona una categoría</option>
+        <?php foreach ($categorias as $cat): ?>
+            <option value="<?= $cat['idCategoria'] ?>">
+                <?= htmlspecialchars($cat['nombre']) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
 
         <div class="form-group">
             <label>Tipo de contenido:</label>
@@ -58,6 +69,8 @@ require 'partials/header.php';
         </div>
 
         <div class="form-group">
+        
+
             <button type="submit" class="btn-publicar">Publicar</button>
             <a href="/Post" class="btn-cancelar">Cancelar</a>
         </div>
@@ -70,7 +83,7 @@ require 'partials/header.php';
 .form-publicacion {
     max-width: 600px;
     margin: 2rem auto;
-    background: white;
+    background: #fff;
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -95,11 +108,23 @@ require 'partials/header.php';
     font-family: inherit;
     font-size: 1rem;
     resize: vertical;
+    background: #fff;
+    color: #111;
 }
 
 .form-group textarea:focus {
     outline: none;
     border-color: #007bff;
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    font-size: 1rem;
 }
 
 .contador-caracteres {
@@ -128,6 +153,7 @@ require 'partials/header.php';
     border: 2px dashed #ddd;
     border-radius: 4px;
     cursor: pointer;
+    background: #fafafa;
 }
 
 .preview {
@@ -192,7 +218,149 @@ require 'partials/header.php';
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+
+/* === MODO OSCURO === */
+[data-theme="dark"] body {
+    background-color: #121212;
+    color: #e5e5e5;
+}
+
+[data-theme="dark"] .form-publicacion {
+    background: #1e1e1e !important;
+    color: #f5f5f5;
+    box-shadow: 0 2px 12px rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .form-group label {
+    color: #ccc;
+}
+
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .form-select {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #f5f5f5;
+}
+
+[data-theme="dark"] .form-group textarea::placeholder {
+    color: #aaa;
+}
+
+[data-theme="dark"] .form-group textarea:focus,
+[data-theme="dark"] .form-select:focus {
+    border-color: #3399ff;
+    box-shadow: 0 0 0 2px rgba(51,153,255,0.2);
+}
+
+[data-theme="dark"] .contador-caracteres {
+    color: #aaa;
+}
+
+[data-theme="dark"] .archivo-upload input[type="file"] {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #ddd;
+}
+
+[data-theme="dark"] .archivo-upload input[type="file"]:hover {
+    border-color: #3399ff;
+    background: #222;
+}
+
+[data-theme="dark"] .btn-publicar {
+    background: #3399ff;
+    color: #fff;
+}
+
+[data-theme="dark"] .btn-publicar:hover {
+    background: #1a6ed1;
+}
+
+[data-theme="dark"] .btn-cancelar {
+    border-color: #555;
+    color: #bbb;
+}
+
+[data-theme="dark"] .btn-cancelar:hover {
+    background: #2e2e2e;
+}
+
+[data-theme="dark"] .mensaje.exito {
+    background: rgba(46, 125, 50, 0.2);
+    color: #a6f0a6;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+[data-theme="dark"] .mensaje.error {
+    background: rgba(211, 47, 47, 0.15);
+    color: #ffb3b3;
+    border-color: rgba(211, 47, 47, 0.3);
+}
+
+/* === MODO CLARO — Siempre fondo blanco === */
+[data-theme="light"] .form-publicacion,
+body:not([data-theme="dark"]) .form-publicacion {
+    background: #ffffff !important;
+    color: #111 !important;
+}
+/* 🔧 FIX FINAL — Forzar fondo oscuro real al activar data-theme="dark" */
+[data-theme="dark"] .form-publicacion {
+    background-color: #1a1a1a !important;
+    color: #f5f5f5 !important;
+    border: 1px solid #333 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Ajustar texto y labels */
+[data-theme="dark"] .form-group label,
+[data-theme="dark"] .contador-caracteres {
+    color: #ddd !important;
+}
+
+/* Inputs y selects */
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] input[type="file"] {
+    background-color: #2a2a2a !important;
+    border-color: #444 !important;
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] select option {
+    color: #aaa !important;
+}
+
+/* Botones */
+[data-theme="dark"] .btn-publicar {
+    background: #3399ff !important;
+    color: #fff !important;
+}
+
+[data-theme="dark"] .btn-cancelar {
+    border-color: #666 !important;
+    color: #ddd !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .btn-cancelar:hover {
+    background: #333 !important;
+}
+
+/* Mensajes */
+[data-theme="dark"] .mensaje.exito {
+    background: rgba(56, 142, 60, 0.2) !important;
+    color: #b6f5b6 !important;
+}
+
+[data-theme="dark"] .mensaje.error {
+    background: rgba(211, 47, 47, 0.15) !important;
+    color: #ffb3b3 !important;
+}
+
 </style>
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

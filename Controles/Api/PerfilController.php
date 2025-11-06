@@ -113,92 +113,74 @@ class PerfilController
     /**
      * Actualizar avatar
      */
-    public function updateAvatar()
-    {
-        $this->authorizeUser();
+   public function updateAvatar()
+{
+    $this->authorizeUser();
 
-        $id = $_SESSION['user']['id'];
-        
-        // Verificar que se subió un archivo
-        if (empty($_FILES['avatar']['name'])) {
-            $_SESSION['error'] = "No se seleccionó ningún archivo";
-            return redirect('/configuracion');
-        }
+    $id = $_SESSION['user']['idUsuario'];
 
-        // Verificar errores de subida
-        if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
-            $_SESSION['error'] = "Error al subir el archivo. Código: " . $_FILES['avatar']['error'];
-            return redirect('/configuracion');
-        }
-
-        // Validar tipo de archivo
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $fileType = $_FILES['avatar']['type'];
-        
-        if (!in_array($fileType, $allowedTypes)) {
-            $_SESSION['error'] = "Solo se permiten imágenes (JPG, PNG, GIF, WEBP)";
-            return redirect('/configuracion');
-        }
-
-        // Validar tamaño (máximo 5MB)
-        $maxSize = 5 * 1024 * 1024; // 5MB en bytes
-        if ($_FILES['avatar']['size'] > $maxSize) {
-            $_SESSION['error'] = "El archivo es demasiado grande. Máximo 5MB";
-            return redirect('/configuracion');
-        }
-
-        // Obtener la extensión del archivo
-        $extension = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
-        
-        // Generar nombre único para evitar conflictos
-        $nombreArchivo = 'avatar_' . $id . '_' . time() . '.' . $extension;
-        
-        // Definir ruta absoluta del directorio de subida
-        // Ajusta esta ruta según tu estructura de hosting
-        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/avatars/';
-        
-        // Crear directorio si no existe
-        if (!file_exists($uploadDir)) {
-            if (!mkdir($uploadDir, 0755, true)) {
-                $_SESSION['error'] = "No se pudo crear el directorio de avatares";
-                return redirect('/configuracion');
-            }
-        }
-
-        // Verificar permisos de escritura
-        if (!is_writable($uploadDir)) {
-            $_SESSION['error'] = "El directorio de avatares no tiene permisos de escritura";
-            return redirect('/configuracion');
-        }
-
-        $rutaCompleta = $uploadDir . $nombreArchivo;
-        
-        // Mover archivo subido
-        if (move_uploaded_file($_FILES['avatar']['tmp_name'], $rutaCompleta)) {
-            // Ruta relativa para guardar en la BD
-            $rutaRelativa = '/uploads/avatars/' . $nombreArchivo;
-            
-            // Eliminar avatar anterior si existe
-            if (!empty($_SESSION['user']['avatar'])) {
-                $avatarAnterior = $_SERVER['DOCUMENT_ROOT'] . $_SESSION['user']['avatar'];
-                if (file_exists($avatarAnterior) && is_file($avatarAnterior)) {
-                    @unlink($avatarAnterior);
-                }
-            }
-            
-            // Actualizar en la base de datos
-            $this->userModel->update($id, ['avatar' => $rutaRelativa]);
-            
-            // Actualizar sesión
-            $_SESSION['user']['avatar'] = $rutaRelativa;
-            
-            $_SESSION['success'] = "Avatar actualizado correctamente";
-        } else {
-            $_SESSION['error'] = "Error al guardar el archivo. Verifica los permisos del servidor";
-        }
-
+    // Verificar que se subió un archivo
+    if (empty($_FILES['avatar']['name'])) {
+        $_SESSION['error'] = "No se seleccionó ningún archivo";
         return redirect('/configuracion');
     }
+
+    // Validar errores
+    if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+        $_SESSION['error'] = "Error al subir el archivo. Código: " . $_FILES['avatar']['error'];
+        return redirect('/configuracion');
+    }
+
+    // Validar tipo y tamaño
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $fileType = mime_content_type($_FILES['avatar']['tmp_name']);
+    if (!in_array($fileType, $allowedTypes)) {
+        $_SESSION['error'] = "Solo se permiten imágenes JPG, PNG, GIF o WEBP.";
+        return redirect('/configuracion');
+    }
+
+    $maxSize = 5 * 1024 * 1024;
+    if ($_FILES['avatar']['size'] > $maxSize) {
+        $_SESSION['error'] = "El archivo es demasiado grande. Máximo 5MB.";
+        return redirect('/configuracion');
+    }
+
+    // Crear carpeta si no existe
+    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/avatars/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // Generar nombre único
+    $extension = pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION);
+    $nombreArchivo = 'user_' . $id . '_' . time() . '.' . $extension;
+    $rutaCompleta = $uploadDir . $nombreArchivo;
+    $rutaRelativa = '/uploads/avatars/' . $nombreArchivo;
+
+    // Mover el archivo
+    if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $rutaCompleta)) {
+        $_SESSION['error'] = "Error al guardar la imagen.";
+        return redirect('/configuracion');
+    }
+
+    // Eliminar foto anterior si existe
+    if (!empty($_SESSION['user']['fotoPerfil'])) {
+        $anterior = $_SERVER['DOCUMENT_ROOT'] . $_SESSION['user']['fotoPerfil'];
+        if (file_exists($anterior)) {
+            @unlink($anterior);
+        }
+    }
+
+    // Actualizar base de datos
+    $this->userModel->update($id, ['fotoPerfil' => $rutaRelativa]);
+
+    // Actualizar sesión
+    $_SESSION['user']['fotoPerfil'] = $rutaRelativa;
+
+    $_SESSION['success'] = "Foto de perfil actualizada correctamente.";
+    return redirect('/perfil');
+}
+
 
     /**
      * Desactivar usuario (baja voluntaria)

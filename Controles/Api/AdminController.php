@@ -22,38 +22,41 @@ class AdminController
      * Mostrar el Dashboard principal
      */
     public function dashboard()
-    {
-        $this->authorizeAdmin();
+{
+    $this->authorizeAdmin();
 
-        // 1. Tarjetas de Estadísticas
-        $stats = [
-            'totalUsuarios' => $this->userModel->count(),
-            'nuevosHoy' => $this->userModel->countNuevosHoy(),
-            'totalPublicaciones' => $this->publicacionModel->countAll(),
-            'publicacionesHoy' => $this->publicacionModel->countNuevasHoy(),
-            'usuariosActivos' => $this->userModel->countActivosRecientes(7), // Activos en últimos 7 días
-            'contenidoOculto' => $this->publicacionModel->countByEstado('oculto')
-        ];
+    // 1. Tarjetas de Estadísticas
+    $stats = [
+        'totalUsuarios' => $this->userModel->count(),
+        'nuevosHoy' => $this->userModel->countNuevosHoy(),
+        'totalPublicaciones' => $this->publicacionModel->countAll(),
+        'publicacionesHoy' => $this->publicacionModel->countNuevasHoy(),
+        'usuariosActivos' => $this->userModel->countActivosRecientes(7),
+        'contenidoOculto' => $this->publicacionModel->countByEstado('oculto'),
 
-        // 2. Top Usuarios (Asumiendo que getTopUsers existe y devuelve 'username' y 'postCount')
-        // Si tu modelo `User.php` no tiene `getTopUsers`, avísame.
-        $topUsers = $this->userModel->getTopUsers(5); 
+        // ✅ Nuevo: total de comentarios (usando el campo mantenido por triggers)
+        'totalComentarios' => $this->publicacionModel->getTotalComentarios()
+    ];
 
-        // 3. Actividad Reciente (Combinamos nuevos usuarios y posts)
-        $recentActivity = $this->getRecentActivity(10);
+    // 2. Top Usuarios
+    $topUsers = $this->userModel->getTopUsers(5); 
 
-        // 4. Datos del Gráfico
-        $chartData = $this->getChartData7Dias();
+    // 3. Actividad Reciente
+    $recentActivity = $this->getRecentActivity(10);
 
-        return view('admin/dashboard.php', [
-            'stats' => $stats,
-            'topUsers' => $topUsers,
-            'recentActivity' => $recentActivity,
-            'chartLabels' => $chartData['labels'],
-            'chartUsuarios' => $chartData['usuarios'],
-            'chartPublicaciones' => $chartData['publicaciones']
-        ]);
-    }
+    // 4. Datos del Gráfico
+    $chartData = $this->getChartData7Dias();
+
+    return view('admin/dashboard.php', [
+        'stats' => $stats,
+        'topUsers' => $topUsers,
+        'recentActivity' => $recentActivity,
+        'chartLabels' => $chartData['labels'],
+        'chartUsuarios' => $chartData['usuarios'],
+        'chartPublicaciones' => $chartData['publicaciones']
+    ]);
+}
+
 
     /**
      * Mostrar la página de Reportes

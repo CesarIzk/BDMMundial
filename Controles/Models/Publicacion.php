@@ -373,4 +373,10 @@ class Publicacion
         
         return $posts;
     }
+    public function getTotalComentarios()
+{
+    $result = $this->db->query("SELECT SUM(comentarios) AS total FROM publicaciones")->find();
+    return $result['total'] ?? 0;
+}
+
 }
