@@ -118,68 +118,102 @@ class PostController
     /**
      * Crear nueva publicación
      */
-    public function store()
-    {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+    /**
+ * Crear nueva publicación
+ */
+public function store()
+{
+    // ✅ Iniciar sesión al principio
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
-        if (!isset($_SESSION['user'])) {
-            http_response_code(401);
-            echo json_encode(['error' => 'No autenticado']);
-            return;
-        }
+    // ✅ Establecer header JSON desde el inicio
+    header('Content-Type: application/json');
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Método no permitido']);
-            return;
-        }
+    // 🔐 Verificar autenticación
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'No autenticado']);
+        return;
+    }
 
-        $idUsuario = $_SESSION['user']['idUsuario'];
-        $user = $this->db->query("SELECT estado FROM users WHERE idUsuario = ?", [$idUsuario])->find();
+    // 🔐 Verificar método POST
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Método no permitido']);
+        return;
+    }
 
-        if (!$user || $user['estado'] !== 'activo') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Cuenta inactiva o suspendida']);
-            return;
-        }
+    $idUsuario = $_SESSION['user']['idUsuario'];
 
-        $texto = trim($_POST['texto'] ?? '');
-        $tipo = $_POST['tipo'] ?? 'texto';
-        $idCategoria = $_POST['idCategoria'] ?? null;
-        $archivoRuta = null;
+    // 🔍 Verificar estado del usuario
+    $user = $this->db->query("SELECT estado FROM users WHERE idUsuario = ?", [$idUsuario])->find();
 
-        if (empty($texto)) {
+    if (!$user || $user['estado'] !== 'activo') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Cuenta inactiva o suspendida']);
+        return;
+    }
+
+    // 📝 Obtener datos del formulario
+    $texto = trim($_POST['texto'] ?? '');
+    $tipo = $_POST['tipo'] ?? 'texto';
+    $idCategoria = $_POST['idCategoria'] ?? null;
+    $archivoRuta = null;
+
+    // ✅ Validaciones
+    if (empty($texto)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'El contenido es obligatorio']);
+        return;
+    }
+
+    if (!$idCategoria) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Debe seleccionar una categoría']);
+        return;
+    }
+
+    // 📁 Manejo de archivos
+    if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
+        if ($archivoRuta === false) {
             http_response_code(400);
-            echo json_encode(['error' => 'El contenido es obligatorio']);
+            echo json_encode(['error' => 'Error al subir la imagen. Verifica el formato y tamaño (máx. 5MB)']);
             return;
         }
-
-        if (!$idCategoria) {
+    } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $archivoRuta = $this->handleVideoUpload($_FILES['video']);
+        if ($archivoRuta === false) {
             http_response_code(400);
-            echo json_encode(['error' => 'Debe seleccionar una categoría']);
+            echo json_encode(['error' => 'Error al subir el video. Verifica el formato y tamaño (máx. 50MB)']);
             return;
-        }
-
-        if ($tipo === 'imagen' && isset($_FILES['imagen'])) {
-            $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
-        } elseif ($tipo === 'video' && isset($_FILES['video'])) {
-            $archivoRuta = $this->handleVideoUpload($_FILES['video']);
-        }
-
-        try {
-            $this->db->query(
-                "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
-                 VALUES (?, ?, ?, ?, ?, 'publico', NOW())",
-                [$idUsuario, $idCategoria, htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'), $tipo, $archivoRuta]
-            );
-
-            echo json_encode(['success' => true, 'message' => 'Publicación creada exitosamente']);
-        } catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Error al crear la publicación', 'detalles' => $e->getMessage()]);
         }
     }
 
+    // 💾 Insertar en base de datos
+    try {
+        $this->db->query(
+            "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
+             VALUES (?, ?, ?, ?, ?, 'publico', NOW())",
+            [$idUsuario, $idCategoria, htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'), $tipo, $archivoRuta]
+        );
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Publicación creada exitosamente'
+        ]);
+
+    } catch (\Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Error al crear la publicación',
+            'detalles' => $e->getMessage()
+        ]);
+    }
+}
     /**
      * 📄 Mostrar publicación individual (para el modal)
      * @param array $params Parámetros de la ruta (ejemplo: ['id' => '7'])

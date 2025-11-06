@@ -6,10 +6,11 @@ $router->post('/register', 'Controles/Api/AuthController@register');
 $router->get('/logout', 'Controles/Api/AuthController@logout');
 
 // ========== PUBLICACIONES ==========
-$router->get('/Post', 'Controles/Api/PostController@index');
-$router->get('/Post/create', 'Controles\Api\PostController@create');
+$router->get('/Post', 'Controles\Api\PostController@index');
 $router->post('/Post/store', 'Controles\Api\PostController@store');
-$router->post('/Post/like', 'Controles/Api/PostController@like');
+$router->post('/Post/like', 'Controles\Api\PostController@like');
+$router->get('/Post/create', 'Controles\Api\PostController@create');
+
 // En tu archivo de rutas, ANTES de la ruta con {id}
 $router->get('/Post/view', 'Controles\Api\PostController@show'); // Nueva ruta
 $router->get('/Post/{id}', 'Controles\Api\PostController@show'); // Mantener esta
