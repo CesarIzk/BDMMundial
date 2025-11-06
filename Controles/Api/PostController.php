@@ -33,19 +33,16 @@ class PostController
                 WHERE p.estado = 'publico'";
         $params = [];
 
-        // 🔹 Filtro por categoría
         if (!empty($categoria)) {
             $sql .= " AND p.idCategoria = ?";
             $params[] = $categoria;
         }
 
-        // 🔹 Filtro por búsqueda (texto, usuario, nombre o categoría)
         if (!empty($busqueda)) {
             $sql .= " AND (p.texto LIKE ? OR u.username LIKE ? OR u.Nombre LIKE ? OR c.nombre LIKE ?)";
             $params = array_merge($params, array_fill(0, 4, "%$busqueda%"));
         }
 
-        // 🔹 Orden
         if ($orden === 'populares') {
             $sql .= " ORDER BY p.likes DESC";
         } else {
@@ -55,10 +52,8 @@ class PostController
         $sql .= " LIMIT $limit OFFSET $offset";
         $posts = $this->db->query($sql, $params)->get();
 
-        // 🔹 Obtener categorías
         $categorias = $this->db->query("SELECT idCategoria, nombre FROM categorias ORDER BY nombre ASC")->get();
 
-        // 🔹 Conteo total
         $countSql = "SELECT COUNT(*) AS total
                      FROM publicaciones p
                      JOIN users u ON p.idUsuario = u.idUsuario
@@ -78,19 +73,16 @@ class PostController
         $total = $this->db->query($countSql, $countParams)->find()['total'] ?? 0;
         $pages = max(ceil($total / $limit), 1);
 
-        // 🔹 Si es AJAX (lazy load)
         if (
             isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
             strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
         ) {
-            // Solo renderizamos las tarjetas
             foreach ($posts as $post) {
                 require base_path('views/partials/postCard.php');
             }
             return;
         }
 
-        // 🔹 Renderizar vista
         return view('Post.php', [
             'publicaciones' => $posts,
             'categorias' => $categorias,
@@ -115,182 +107,181 @@ class PostController
         return view('CrearPublicacion.php', ['categorias' => $categorias]);
     }
 
+    /**
+     * Crear nueva publicación
+     */
+    public function store()
+    {
+        // ✅ NO iniciar sesión aquí - ya está en index.php
+        header('Content-Type: application/json; charset=utf-8');
 
-/**
- * Crear nueva publicación
- */
-public function store()
-{
-    // ✅ Establecer header JSON INMEDIATAMENTE
-    header('Content-Type: application/json; charset=utf-8');
+        try {
+            // 🔍 Verificar sesión
+            if (session_status() !== PHP_SESSION_ACTIVE) {
+                throw new \Exception("Sesión no activa");
+            }
 
-    // 🔍 Verificar que la sesión esté iniciada
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        error_log("ERROR: Sesión no activa");
-        http_response_code(500);
-        echo json_encode(['error' => 'Error de sesión del servidor']);
-        exit;
-    }
+            error_log("=== STORE DEBUG ===");
+            error_log("Session ID: " . session_id());
+            error_log("User exists: " . (isset($_SESSION['user']) ? 'YES' : 'NO'));
 
-    // 🔍 DEBUG
-    error_log("=== POST STORE ===");
-    error_log("Session ID: " . session_id());
-    error_log("Session active: " . (session_status() === PHP_SESSION_ACTIVE ? 'YES' : 'NO'));
-    error_log("User in session: " . (isset($_SESSION['user']) ? 'YES' : 'NO'));
+            // 🔐 Verificar autenticación
+            if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
+                http_response_code(401);
+                echo json_encode([
+                    'error' => 'No autenticado',
+                    'message' => 'Debes iniciar sesión'
+                ]);
+                exit;
+            }
 
-    // 🔐 Verificar autenticación
-    if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
-        error_log("ERROR: Usuario no autenticado");
-        error_log("Session contents: " . print_r($_SESSION, true));
-        http_response_code(401);
-        echo json_encode([
-            'error' => 'No autenticado',
-            'message' => 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.',
-            'redirect' => '/'
-        ]);
-        exit;
-    }
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => 'Método no permitido']);
+                exit;
+            }
 
-    // 🔐 Verificar método POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        echo json_encode(['error' => 'Método no permitido']);
-        exit;
-    }
+            $idUsuario = (int)$_SESSION['user']['idUsuario'];
+            error_log("User ID: $idUsuario");
 
-    $idUsuario = (int)$_SESSION['user']['idUsuario'];
-    error_log("✅ Usuario autenticado - ID: $idUsuario");
+            // 🔍 Verificar usuario en BD
+            $user = $this->db->query(
+                "SELECT estado FROM users WHERE idUsuario = ?", 
+                [$idUsuario]
+            )->find();
 
-    // 🔍 Verificar que el usuario existe y está activo
-    try {
-        $user = $this->db->query(
-            "SELECT estado FROM users WHERE idUsuario = ?", 
-            [$idUsuario]
-        )->find();
+            if (!$user) {
+                throw new \Exception("Usuario no encontrado en BD");
+            }
 
-        if (!$user) {
-            error_log("ERROR: Usuario $idUsuario no encontrado en BD");
-            http_response_code(403);
-            echo json_encode(['error' => 'Usuario no encontrado']);
-            exit;
-        }
+            if ($user['estado'] !== 'activo') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Cuenta inactiva']);
+                exit;
+            }
 
-        if ($user['estado'] !== 'activo') {
-            error_log("ERROR: Usuario inactivo - Estado: " . $user['estado']);
-            http_response_code(403);
-            echo json_encode(['error' => 'Tu cuenta está inactiva']);
-            exit;
-        }
+            // 📝 Obtener datos
+            $texto = trim($_POST['texto'] ?? '');
+            $tipo = $_POST['tipo'] ?? 'texto';
+            $idCategoria = $_POST['idCategoria'] ?? null;
 
-    } catch (\Exception $e) {
-        error_log("ERROR verificando usuario: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['error' => 'Error de verificación']);
-        exit;
-    }
+            error_log("Texto: $texto");
+            error_log("Tipo: $tipo");
+            error_log("Categoria: $idCategoria");
 
-    // 📝 Validar datos del formulario
-    $texto = trim($_POST['texto'] ?? '');
-    $tipo = $_POST['tipo'] ?? 'texto';
-    $idCategoria = $_POST['idCategoria'] ?? null;
+            // ✅ Validaciones
+            if (empty($texto)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'El contenido es obligatorio']);
+                exit;
+            }
 
-    if (empty($texto)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'El contenido es obligatorio']);
-        exit;
-    }
+            if (strlen($texto) > 500) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Máximo 500 caracteres']);
+                exit;
+            }
 
-    if (strlen($texto) > 500) {
-        http_response_code(400);
-        echo json_encode(['error' => 'El texto no puede exceder 500 caracteres']);
-        exit;
-    }
+            if (!$idCategoria || !is_numeric($idCategoria)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Categoría inválida']);
+                exit;
+            }
 
-    if (!$idCategoria || !is_numeric($idCategoria)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Debes seleccionar una categoría válida']);
-        exit;
-    }
+            // 📁 Manejo de archivos
+            $archivoRuta = null;
 
-    // 📁 Manejo de archivos multimedia
-    $archivoRuta = null;
+            if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
+                error_log("Subiendo imagen...");
+                error_log("Imagen info: " . print_r($_FILES['imagen'], true));
+                
+                $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
+                
+                if ($archivoRuta === false) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Error al subir imagen']);
+                    exit;
+                }
+                error_log("Imagen guardada: $archivoRuta");
+                
+            } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
+                error_log("Subiendo video...");
+                error_log("Video info: " . print_r($_FILES['video'], true));
+                
+                $archivoRuta = $this->handleVideoUpload($_FILES['video']);
+                
+                if ($archivoRuta === false) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Error al subir video']);
+                    exit;
+                }
+                error_log("Video guardado: $archivoRuta");
+            }
 
-    if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
-        error_log("Procesando imagen...");
-        $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
-        
-        if ($archivoRuta === false) {
-            error_log("ERROR: Fallo al subir imagen");
-            http_response_code(400);
-            echo json_encode(['error' => 'Error al subir la imagen. Verifica formato (JPG, PNG, GIF) y tamaño (máx. 5MB)']);
-            exit;
-        }
-        error_log("✅ Imagen subida: $archivoRuta");
-        
-    } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
-        error_log("Procesando video...");
-        $archivoRuta = $this->handleVideoUpload($_FILES['video']);
-        
-        if ($archivoRuta === false) {
-            error_log("ERROR: Fallo al subir video");
-            http_response_code(400);
-            echo json_encode(['error' => 'Error al subir el video. Verifica formato (MP4, MOV, AVI) y tamaño (máx. 50MB)']);
-            exit;
-        }
-        error_log("✅ Video subido: $archivoRuta");
-    }
-
-    // 💾 Insertar publicación en la base de datos
-    try {
-        error_log("Insertando publicación en BD...");
-        
-        $this->db->query(
-            "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
-             VALUES (?, ?, ?, ?, ?, 'publico', NOW())",
-            [
+            // 💾 Insertar en BD
+            error_log("Insertando en BD...");
+            
+            $query = "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
+                      VALUES (?, ?, ?, ?, ?, 'publico', NOW())";
+            
+            $params = [
                 $idUsuario,
                 (int)$idCategoria,
                 htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'),
                 $tipo,
                 $archivoRuta
-            ]
-        );
+            ];
 
-        error_log("✅ Publicación creada exitosamente - Usuario: $idUsuario");
+            error_log("Query: $query");
+            error_log("Params: " . print_r($params, true));
 
-        // ✅ Respuesta exitosa
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Publicación creada exitosamente'
-        ]);
+            $this->db->query($query, $params);
 
-    } catch (\Exception $e) {
-        error_log("ERROR al insertar publicación: " . $e->getMessage());
-        error_log("Stack trace: " . $e->getTraceAsString());
-        
-        http_response_code(500);
-        echo json_encode([
-            'error' => 'Error al guardar la publicación',
-            'message' => 'No se pudo guardar la publicación. Intenta nuevamente.'
-        ]);
+            error_log("✅ Publicación creada");
+
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Publicación creada exitosamente'
+            ]);
+
+        } catch (\PDOException $e) {
+            error_log("❌ PDO Error: " . $e->getMessage());
+            error_log("SQL State: " . $e->getCode());
+            error_log("Stack: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Error de base de datos',
+                'message' => 'No se pudo guardar la publicación',
+                'details' => $e->getMessage()
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("❌ Error general: " . $e->getMessage());
+            error_log("Stack: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Error al crear publicación',
+                'message' => $e->getMessage()
+            ]);
+        }
+
+        exit;
     }
 
-    exit;
-}  /**
-     * 📄 Mostrar publicación individual (para el modal)
-     * @param array $params Parámetros de la ruta (ejemplo: ['id' => '7'])
+    /**
+     * 📄 Mostrar publicación individual
      */
     public function show($params = [])
     {
-        // El router siempre pasa un array con los parámetros de la URL
         $postId = $params['id'] ?? null;
 
-        // Validar que sea un ID numérico válido
         if (!$postId || !is_numeric($postId)) {
             http_response_code(400);
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'ID inválido o faltante']);
+            echo json_encode(['error' => 'ID inválido']);
             return;
         }
 
@@ -310,7 +301,6 @@ public function store()
                 return;
             }
 
-            // ✅ Respuesta en formato JSON
             header('Content-Type: application/json');
             echo json_encode($post, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -322,13 +312,12 @@ public function store()
     }
 
     /**
-     * ❤️ Dar o quitar "like" a una publicación (AJAX)
+     * ❤️ Like/Unlike
      */
     public function like()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
-        // 🔐 Verificar autenticación
         if (!isset($_SESSION['user'])) {
             http_response_code(401);
             echo json_encode(['error' => 'No autenticado']);
@@ -351,25 +340,21 @@ public function store()
         }
 
         try {
-            // 🔍 Comprobar si ya existe el like
             $likeExistente = $this->db->query(
                 "SELECT idLike FROM likes WHERE idUsuario = ? AND idPublicacion = ?",
                 [$idUsuario, $postId]
             )->find();
 
             if ($likeExistente) {
-                // ❌ Eliminar like
                 $this->db->query("DELETE FROM likes WHERE idUsuario = ? AND idPublicacion = ?", [$idUsuario, $postId]);
                 $this->db->query("UPDATE publicaciones SET likes = GREATEST(likes - 1, 0) WHERE idPublicacion = ?", [$postId]);
                 $accion = 'unliked';
             } else {
-                // ❤️ Agregar like
                 $this->db->query("INSERT INTO likes (idUsuario, idPublicacion) VALUES (?, ?)", [$idUsuario, $postId]);
                 $this->db->query("UPDATE publicaciones SET likes = likes + 1 WHERE idPublicacion = ?", [$postId]);
                 $accion = 'liked';
             }
 
-            // 🔢 Obtener total actualizado
             $nuevoTotal = $this->db->query(
                 "SELECT likes FROM publicaciones WHERE idPublicacion = ?",
                 [$postId]
@@ -391,70 +376,124 @@ public function store()
         }
     }
 
-    // === FUNCIONES PRIVADAS ===
- /**
- * 🖼️ Manejar subida de imágenes de publicaciones
- */
-private function handleImageUpload($file)
-{
-    if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
+    /**
+     * 🖼️ Subir imagen
+     */
+    private function handleImageUpload($file)
+    {
+        try {
+            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+                return null;
+            }
 
-    // Validaciones básicas
-    if ($file['size'] > 5 * 1024 * 1024) return false;
-    $mime = mime_content_type($file['tmp_name']);
-    $extensionesPermitidas = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/gif' => 'gif',
-        'image/webp' => 'webp'
-    ];
-    if (!isset($extensionesPermitidas[$mime])) return false;
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                error_log("Error en upload: " . $file['error']);
+                return false;
+            }
 
-    // 📁 Crear carpeta si no existe
-    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/imagenes/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+            if ($file['size'] > 5 * 1024 * 1024) {
+                error_log("Imagen muy grande: " . $file['size']);
+                return false;
+            }
+
+            $mime = mime_content_type($file['tmp_name']);
+            $extensionesPermitidas = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp'
+            ];
+
+            if (!isset($extensionesPermitidas[$mime])) {
+                error_log("Tipo MIME no permitido: $mime");
+                return false;
+            }
+
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/imagenes/';
+            
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    error_log("No se pudo crear directorio: $uploadDir");
+                    return false;
+                }
+            }
+
+            $extension = $extensionesPermitidas[$mime];
+            $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
+            $rutaCompleta = $uploadDir . $filename;
+            $rutaRelativa = '/uploads/posts/imagenes/' . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $rutaCompleta)) {
+                error_log("No se pudo mover archivo a: $rutaCompleta");
+                return false;
+            }
+
+            error_log("Imagen guardada: $rutaRelativa");
+            return $rutaRelativa;
+
+        } catch (\Exception $e) {
+            error_log("Excepción en handleImageUpload: " . $e->getMessage());
+            return false;
+        }
     }
 
-    // 🔤 Nombre seguro y único
-    $extension = $extensionesPermitidas[$mime];
-    $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
-    $rutaCompleta = $uploadDir . $filename;
-    $rutaRelativa = '/uploads/posts/imagenes/' . $filename;
+    /**
+     * 🎥 Subir video
+     */
+    private function handleVideoUpload($file)
+    {
+        try {
+            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+                return null;
+            }
 
-    // 📦 Mover el archivo
-    return move_uploaded_file($file['tmp_name'], $rutaCompleta) ? $rutaRelativa : false;
-}
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                error_log("Error en upload: " . $file['error']);
+                return false;
+            }
 
-/**
- * 🎥 Manejar subida de videos de publicaciones
- */
-private function handleVideoUpload($file)
-{
-    if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
+            if ($file['size'] > 50 * 1024 * 1024) {
+                error_log("Video muy grande: " . $file['size']);
+                return false;
+            }
 
-    if ($file['size'] > 50 * 1024 * 1024) return false;
-    $mime = mime_content_type($file['tmp_name']);
-    $extensionesPermitidas = [
-        'video/mp4' => 'mp4',
-        'video/quicktime' => 'mov',
-        'video/x-msvideo' => 'avi'
-    ];
-    if (!isset($extensionesPermitidas[$mime])) return false;
+            $mime = mime_content_type($file['tmp_name']);
+            $extensionesPermitidas = [
+                'video/mp4' => 'mp4',
+                'video/quicktime' => 'mov',
+                'video/x-msvideo' => 'avi'
+            ];
 
-    // 📁 Crear carpeta si no existe
-    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/videos/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+            if (!isset($extensionesPermitidas[$mime])) {
+                error_log("Tipo MIME no permitido: $mime");
+                return false;
+            }
+
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/videos/';
+            
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    error_log("No se pudo crear directorio: $uploadDir");
+                    return false;
+                }
+            }
+
+            $extension = $extensionesPermitidas[$mime];
+            $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
+            $rutaCompleta = $uploadDir . $filename;
+            $rutaRelativa = '/uploads/posts/videos/' . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $rutaCompleta)) {
+                error_log("No se pudo mover archivo a: $rutaCompleta");
+                return false;
+            }
+
+            error_log("Video guardado: $rutaRelativa");
+            return $rutaRelativa;
+
+        } catch (\Exception $e) {
+            error_log("Excepción en handleVideoUpload: " . $e->getMessage());
+            return false;
+        }
     }
-
-    // 🔤 Nombre seguro
-    $extension = $extensionesPermitidas[$mime];
-    $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
-    $rutaCompleta = $uploadDir . $filename;
-    $rutaRelativa = '/uploads/posts/videos/' . $filename;
-
-    return move_uploaded_file($file['tmp_name'], $rutaCompleta) ? $rutaRelativa : false;
-}
-
 }

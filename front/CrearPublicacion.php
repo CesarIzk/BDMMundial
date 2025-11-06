@@ -1,744 +1,499 @@
-<?php require 'partials/header.php'; ?>
+<?php
 
-<div class="contenedor">
-    <div class="header-seccion">
-        <h2 class="titulo-seccion">✍️ Crear Nueva Publicación</h2>
-        <a href="/Post" class="btn-volver">← Volver a publicaciones</a>
-    </div>
-    
-    <form id="formPublicacion" enctype="multipart/form-data" class="form-publicacion">
-        
-        <!-- Texto de la publicación -->
-        <div class="form-group">
-            <label for="texto">
-                <i>💭</i> ¿Qué estás pensando?
-            </label>
-            <textarea 
-                id="texto" 
-                name="texto" 
-                rows="5" 
-                maxlength="500" 
-                placeholder="Comparte tus opiniones sobre el Mundial, tu equipo favorito, momentos históricos..."
-                required
-            ></textarea>
-            <small class="contador-caracteres">0/500 caracteres</small>
-        </div>
+namespace Controles\Api;
 
-        <!-- Categoría -->
-        <div class="form-group">
-            <label for="categoria">
-                <i>📂</i> Categoría
-            </label>
-            <select name="idCategoria" id="categoria" class="form-select" required>
-                <option value="">Selecciona una categoría</option>
-                <?php foreach ($categorias as $cat): ?>
-                    <option value="<?= $cat['idCategoria'] ?>">
-                        <?= htmlspecialchars($cat['nombre']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
+use Core\App;
 
-        <!-- Tipo de contenido -->
-        <div class="form-group">
-            <label><i>🎨</i> Tipo de contenido:</label>
-            <div class="tipo-contenido">
-                <label class="radio-card">
-                    <input type="radio" name="tipo" value="texto" checked>
-                    <span class="radio-content">
-                        <span class="radio-icon">📝</span>
-                        <span class="radio-text">Solo texto</span>
-                    </span>
-                </label>
-                <label class="radio-card">
-                    <input type="radio" name="tipo" value="imagen">
-                    <span class="radio-content">
-                        <span class="radio-icon">🖼️</span>
-                        <span class="radio-text">Con imagen</span>
-                    </span>
-                </label>
-                <label class="radio-card">
-                    <input type="radio" name="tipo" value="video">
-                    <span class="radio-content">
-                        <span class="radio-icon">🎥</span>
-                        <span class="radio-text">Con video</span>
-                    </span>
-                </label>
-            </div>
-        </div>
+class PostController
+{
+    protected $db;
 
-        <!-- Upload de imagen -->
-        <div class="form-group archivo-upload" id="imagenUpload" style="display:none;">
-            <label for="imagen">
-                <i>🖼️</i> Subir Imagen
-            </label>
-            <div class="upload-area">
-                <input 
-                    type="file" 
-                    id="imagen" 
-                    name="imagen" 
-                    accept="image/jpeg,image/png,image/gif,image/webp"
-                >
-                <div class="upload-placeholder">
-                    <span class="upload-icon">📸</span>
-                    <p>Arrastra una imagen aquí o haz clic para seleccionar</p>
-                    <small>JPG, PNG, GIF o WEBP • Máximo 5MB</small>
-                </div>
-            </div>
-            <div class="preview" id="imagenPreview"></div>
-        </div>
-
-        <!-- Upload de video -->
-        <div class="form-group archivo-upload" id="videoUpload" style="display:none;">
-            <label for="video">
-                <i>🎥</i> Subir Video
-            </label>
-            <div class="upload-area">
-                <input 
-                    type="file" 
-                    id="video" 
-                    name="video" 
-                    accept="video/mp4,video/quicktime,video/x-msvideo"
-                >
-                <div class="upload-placeholder">
-                    <span class="upload-icon">🎬</span>
-                    <p>Arrastra un video aquí o haz clic para seleccionar</p>
-                    <small>MP4, MOV o AVI • Máximo 50MB</small>
-                </div>
-            </div>
-            <div class="preview" id="videoPreview"></div>
-        </div>
-
-        <!-- Botones de acción -->
-        <div class="form-actions">
-            <button type="submit" class="btn-publicar">
-                <span class="btn-icon">✓</span>
-                <span class="btn-text">Publicar</span>
-            </button>
-            <a href="/Post" class="btn-cancelar">
-                <span class="btn-icon">✕</span>
-                <span class="btn-text">Cancelar</span>
-            </a>
-        </div>
-
-        <!-- Mensaje de respuesta -->
-        <div id="mensaje" class="mensaje" style="display:none;"></div>
-    </form>
-</div>
-
-<style>
-/* === CONTENEDOR PRINCIPAL === */
-.contenedor {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-}
-
-.header-seccion {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.titulo-seccion {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin: 0;
-}
-
-.btn-volver {
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    color: #666;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: all 0.3s;
-}
-
-.btn-volver:hover {
-    background: #f5f5f5;
-    border-color: #999;
-    color: #333;
-}
-
-/* === FORMULARIO === */
-.form-publicacion {
-    background: #fff;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-
-.form-group {
-    margin-bottom: 1.75rem;
-}
-
-.form-group label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    font-weight: 600;
-    color: #333;
-    font-size: 1rem;
-}
-
-.form-group label i {
-    font-style: normal;
-}
-
-/* === TEXTAREA === */
-.form-group textarea {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e5e5e5;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 1rem;
-    line-height: 1.5;
-    resize: vertical;
-    background: #fafafa;
-    color: #1a1a1a;
-    transition: all 0.3s;
-}
-
-.form-group textarea:focus {
-    outline: none;
-    border-color: #007bff;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-}
-
-.form-group textarea::placeholder {
-    color: #999;
-}
-
-/* === SELECT === */
-.form-select {
-    width: 100%;
-    padding: 0.875rem;
-    border: 2px solid #e5e5e5;
-    border-radius: 8px;
-    background: #fafafa;
-    color: #1a1a1a;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.form-select:focus {
-    outline: none;
-    border-color: #007bff;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-}
-
-/* === CONTADOR === */
-.contador-caracteres {
-    display: block;
-    margin-top: 0.5rem;
-    color: #666;
-    font-size: 0.875rem;
-    text-align: right;
-}
-
-/* === TIPO DE CONTENIDO (RADIO CARDS) === */
-.tipo-contenido {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-}
-
-.radio-card {
-    position: relative;
-    cursor: pointer;
-}
-
-.radio-card input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-}
-
-.radio-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1.25rem;
-    border: 2px solid #e5e5e5;
-    border-radius: 8px;
-    background: #fafafa;
-    transition: all 0.3s;
-}
-
-.radio-icon {
-    font-size: 2rem;
-}
-
-.radio-text {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #666;
-}
-
-.radio-card input[type="radio"]:checked + .radio-content {
-    border-color: #007bff;
-    background: #e7f3ff;
-}
-
-.radio-card input[type="radio"]:checked + .radio-content .radio-text {
-    color: #007bff;
-    font-weight: 600;
-}
-
-.radio-card:hover .radio-content {
-    border-color: #007bff;
-    background: #f8f9fa;
-}
-
-/* === UPLOAD AREA === */
-.upload-area {
-    position: relative;
-}
-
-.upload-area input[type="file"] {
-    position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-}
-
-.upload-placeholder {
-    border: 2px dashed #ddd;
-    border-radius: 8px;
-    padding: 2rem;
-    text-align: center;
-    background: #fafafa;
-    transition: all 0.3s;
-}
-
-.upload-area:hover .upload-placeholder {
-    border-color: #007bff;
-    background: #f0f8ff;
-}
-
-.upload-icon {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.upload-placeholder p {
-    margin: 0.5rem 0;
-    color: #333;
-    font-weight: 500;
-}
-
-.upload-placeholder small {
-    color: #666;
-    font-size: 0.85rem;
-}
-
-/* === PREVIEW === */
-.preview {
-    margin-top: 1rem;
-}
-
-.preview img,
-.preview video {
-    max-width: 100%;
-    max-height: 400px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* === BOTONES === */
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.btn-publicar,
-.btn-cancelar {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.875rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-decoration: none;
-}
-
-.btn-publicar {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    color: white;
-    border: none;
-}
-
-.btn-publicar:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-}
-
-.btn-publicar:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.btn-cancelar {
-    background: transparent;
-    color: #666;
-    border: 2px solid #ddd;
-}
-
-.btn-cancelar:hover {
-    background: #f5f5f5;
-    border-color: #999;
-    color: #333;
-}
-
-/* === MENSAJES === */
-.mensaje {
-    margin-top: 1.5rem;
-    padding: 1rem 1.25rem;
-    border-radius: 8px;
-    font-weight: 500;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
+    public function __construct()
+    {
+        $this->db = App::resolve('Core\Database');
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
-.mensaje.exito {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
+    /**
+     * 🔍 Listar publicaciones con búsqueda, filtro y paginación
+     */
+    public function index()
+    {
+        $categoria = $_GET['categoria'] ?? '';
+        $orden = $_GET['orden'] ?? 'reciente';
+        $busqueda = trim($_GET['q'] ?? '');
+        $page = max((int)($_GET['page'] ?? 1), 1);
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
 
-.mensaje.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
+        // Base query
+        $sql = "SELECT p.*, u.Nombre, u.username, u.fotoPerfil, c.nombre AS categoriaNombre
+                FROM publicaciones p
+                JOIN users u ON p.idUsuario = u.idUsuario
+                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                WHERE p.estado = 'publico'";
+        $params = [];
 
-/* === MODO OSCURO === */
-[data-theme="dark"] .contenedor {
-    color: #e5e5e5;
-}
+        if (!empty($categoria)) {
+            $sql .= " AND p.idCategoria = ?";
+            $params[] = $categoria;
+        }
 
-[data-theme="dark"] .titulo-seccion {
-    color: #f5f5f5;
-}
+        if (!empty($busqueda)) {
+            $sql .= " AND (p.texto LIKE ? OR u.username LIKE ? OR u.Nombre LIKE ? OR c.nombre LIKE ?)";
+            $params = array_merge($params, array_fill(0, 4, "%$busqueda%"));
+        }
 
-[data-theme="dark"] .btn-volver {
-    border-color: #444;
-    color: #bbb;
-}
-
-[data-theme="dark"] .btn-volver:hover {
-    background: #2a2a2a;
-    border-color: #666;
-    color: #fff;
-}
-
-[data-theme="dark"] .form-publicacion {
-    background: #1e1e1e;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-}
-
-[data-theme="dark"] .form-group label {
-    color: #ddd;
-}
-
-[data-theme="dark"] textarea,
-[data-theme="dark"] .form-select {
-    background: #2a2a2a;
-    border-color: #444;
-    color: #f0f0f0;
-}
-
-[data-theme="dark"] textarea:focus,
-[data-theme="dark"] .form-select:focus {
-    border-color: #3399ff;
-    background: #2a2a2a;
-    box-shadow: 0 0 0 3px rgba(51,153,255,0.2);
-}
-
-[data-theme="dark"] textarea::placeholder {
-    color: #888;
-}
-
-[data-theme="dark"] .contador-caracteres {
-    color: #aaa;
-}
-
-[data-theme="dark"] .radio-content {
-    background: #2a2a2a;
-    border-color: #444;
-}
-
-[data-theme="dark"] .radio-card input[type="radio"]:checked + .radio-content {
-    border-color: #3399ff;
-    background: rgba(51, 153, 255, 0.15);
-}
-
-[data-theme="dark"] .radio-card input[type="radio"]:checked + .radio-content .radio-text {
-    color: #3399ff;
-}
-
-[data-theme="dark"] .upload-placeholder {
-    background: #2a2a2a;
-    border-color: #444;
-}
-
-[data-theme="dark"] .upload-area:hover .upload-placeholder {
-    border-color: #3399ff;
-    background: rgba(51, 153, 255, 0.1);
-}
-
-[data-theme="dark"] .upload-placeholder p {
-    color: #ddd;
-}
-
-[data-theme="dark"] .upload-placeholder small {
-    color: #aaa;
-}
-
-[data-theme="dark"] .btn-publicar {
-    background: linear-gradient(135deg, #3399ff 0%, #1a6ed1 100%);
-}
-
-[data-theme="dark"] .btn-cancelar {
-    border-color: #555;
-    color: #bbb;
-}
-
-[data-theme="dark"] .btn-cancelar:hover {
-    background: #2e2e2e;
-    border-color: #666;
-}
-
-[data-theme="dark"] .mensaje.exito {
-    background: rgba(56, 142, 60, 0.2);
-    color: #b6f5b6;
-    border-color: rgba(76, 175, 80, 0.3);
-}
-
-[data-theme="dark"] .mensaje.error {
-    background: rgba(211, 47, 47, 0.15);
-    color: #ffb3b3;
-    border-color: rgba(211, 47, 47, 0.3);
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-    .header-seccion {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .form-publicacion {
-        padding: 1.5rem;
-    }
-    
-    .tipo-contenido {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('formPublicacion');
-    const textarea = document.getElementById('texto');
-    const contador = document.querySelector('.contador-caracteres');
-    const tipoRadios = document.querySelectorAll('input[name="tipo"]');
-    const imagenUpload = document.getElementById('imagenUpload');
-    const videoUpload = document.getElementById('videoUpload');
-    const imagenInput = document.getElementById('imagen');
-    const videoInput = document.getElementById('video');
-    const mensaje = document.getElementById('mensaje');
-
-    // Contador de caracteres
-    textarea.addEventListener('input', () => {
-        const length = textarea.value.length;
-        contador.textContent = `${length}/500 caracteres`;
-        
-        if (length > 450) {
-            contador.style.color = '#dc3545';
-            contador.style.fontWeight = '600';
-        } else if (length > 400) {
-            contador.style.color = '#ff9800';
+        if ($orden === 'populares') {
+            $sql .= " ORDER BY p.likes DESC";
         } else {
-            contador.style.color = '#666';
-            contador.style.fontWeight = 'normal';
+            $sql .= " ORDER BY p.postdate DESC";
         }
-    });
 
-    // Mostrar/ocultar campos según tipo
-    tipoRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            imagenUpload.style.display = 'none';
-            videoUpload.style.display = 'none';
-            imagenInput.value = '';
-            videoInput.value = '';
-            document.getElementById('imagenPreview').innerHTML = '';
-            document.getElementById('videoPreview').innerHTML = '';
+        $sql .= " LIMIT $limit OFFSET $offset";
+        $posts = $this->db->query($sql, $params)->get();
 
-            if (radio.value === 'imagen') {
-                imagenUpload.style.display = 'block';
-            } else if (radio.value === 'video') {
-                videoUpload.style.display = 'block';
-            }
-        });
-    });
+        $categorias = $this->db->query("SELECT idCategoria, nombre FROM categorias ORDER BY nombre ASC")->get();
 
-    // Preview de imagen
-    imagenInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const preview = document.getElementById('imagenPreview');
-        preview.innerHTML = '';
+        $countSql = "SELECT COUNT(*) AS total
+                     FROM publicaciones p
+                     JOIN users u ON p.idUsuario = u.idUsuario
+                     LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                     WHERE p.estado = 'publico'";
+        $countParams = [];
 
-        if (file) {
-            // Validar tamaño
-            if (file.size > 5 * 1024 * 1024) {
-                alert('La imagen no debe superar los 5MB');
-                imagenInput.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.alt = 'Preview';
-                preview.appendChild(img);
-            };
-            reader.readAsDataURL(file);
+        if (!empty($categoria)) {
+            $countSql .= " AND p.idCategoria = ?";
+            $countParams[] = $categoria;
         }
-    });
-
-    // Preview de video
-    videoInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const preview = document.getElementById('videoPreview');
-        preview.innerHTML = '';
-
-        if (file) {
-            // Validar tamaño
-            if (file.size > 50 * 1024 * 1024) {
-                alert('El video no debe superar los 50MB');
-                videoInput.value = '';
-                return;
-            }
-
-            const video = document.createElement('video');
-            video.controls = true;
-            video.src = URL.createObjectURL(file);
-            preview.appendChild(video);
+        if (!empty($busqueda)) {
+            $countSql .= " AND (p.texto LIKE ? OR u.username LIKE ? OR u.Nombre LIKE ? OR c.nombre LIKE ?)";
+            $countParams = array_merge($countParams, array_fill(0, 4, "%$busqueda%"));
         }
-    });
 
-    // Enviar formulario
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        $total = $this->db->query($countSql, $countParams)->find()['total'] ?? 0;
+        $pages = max(ceil($total / $limit), 1);
 
-        const formData = new FormData(form);
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const btnText = submitBtn.querySelector('.btn-text');
-        const btnIcon = submitBtn.querySelector('.btn-icon');
-        
-        submitBtn.disabled = true;
-        btnIcon.textContent = '⏳';
-        btnText.textContent = 'Publicando...';
-        mensaje.style.display = 'none';
+        if (
+            isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+        ) {
+            foreach ($posts as $post) {
+                require base_path('views/partials/postCard.php');
+            }
+            return;
+        }
+
+        return view('Post.php', [
+            'publicaciones' => $posts,
+            'categorias' => $categorias,
+            'categoriaSeleccionada' => $categoria,
+            'orden' => $orden,
+            'busqueda' => $busqueda,
+            'currentPage' => $page,
+            'totalPages' => $pages,
+            'total' => $total
+        ]);
+    }
+
+    /**
+     * Mostrar formulario de creación
+     */
+    public function create()
+    {
+        $categorias = $this->db->query("
+            SELECT idCategoria, nombre FROM categorias ORDER BY nombre ASC
+        ")->get();
+
+        return view('CrearPublicacion.php', ['categorias' => $categorias]);
+    }
+
+    /**
+     * Crear nueva publicación
+     */
+    public function store()
+    {
+        // ✅ NO iniciar sesión aquí - ya está en index.php
+        header('Content-Type: application/json; charset=utf-8');
 
         try {
-            console.log('📤 Enviando publicación...');
-            
-            const response = await fetch('/Post/store', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            });
-
-            console.log('📥 Response status:', response.status);
-
-            const contentType = response.headers.get('content-type');
-            let data;
-            
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                const text = await response.text();
-                console.error('❌ Respuesta no es JSON:', text);
-                throw new Error('Respuesta del servidor inválida');
+            // 🔍 Verificar sesión
+            if (session_status() !== PHP_SESSION_ACTIVE) {
+                throw new \Exception("Sesión no activa");
             }
 
-            console.log('📦 Data:', data);
+            error_log("=== STORE DEBUG ===");
+            error_log("Session ID: " . session_id());
+            error_log("User exists: " . (isset($_SESSION['user']) ? 'YES' : 'NO'));
 
-            if (response.ok && data.success) {
-                mensaje.className = 'mensaje exito';
-                mensaje.textContent = '✅ ' + (data.message || '¡Publicación creada exitosamente!');
-                mensaje.style.display = 'block';
+            // 🔐 Verificar autenticación
+            if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
+                http_response_code(401);
+                echo json_encode([
+                    'error' => 'No autenticado',
+                    'message' => 'Debes iniciar sesión'
+                ]);
+                exit;
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => 'Método no permitido']);
+                exit;
+            }
+
+            $idUsuario = (int)$_SESSION['user']['idUsuario'];
+            error_log("User ID: $idUsuario");
+
+            // 🔍 Verificar usuario en BD
+            $user = $this->db->query(
+                "SELECT estado FROM users WHERE idUsuario = ?", 
+                [$idUsuario]
+            )->find();
+
+            if (!$user) {
+                throw new \Exception("Usuario no encontrado en BD");
+            }
+
+            if ($user['estado'] !== 'activo') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Cuenta inactiva']);
+                exit;
+            }
+
+            // 📝 Obtener datos
+            $texto = trim($_POST['texto'] ?? '');
+            $tipo = $_POST['tipo'] ?? 'texto';
+            $idCategoria = $_POST['idCategoria'] ?? null;
+
+            error_log("Texto: $texto");
+            error_log("Tipo: $tipo");
+            error_log("Categoria: $idCategoria");
+
+            // ✅ Validaciones
+            if (empty($texto)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'El contenido es obligatorio']);
+                exit;
+            }
+
+            if (strlen($texto) > 500) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Máximo 500 caracteres']);
+                exit;
+            }
+
+            if (!$idCategoria || !is_numeric($idCategoria)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Categoría inválida']);
+                exit;
+            }
+
+            // 📁 Manejo de archivos
+            $archivoRuta = null;
+
+            if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
+                error_log("Subiendo imagen...");
+                error_log("Imagen info: " . print_r($_FILES['imagen'], true));
                 
-                form.reset();
-                contador.textContent = '0/500 caracteres';
+                $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
                 
-                setTimeout(() => {
-                    window.location.href = '/Post';
-                }, 1500);
+                if ($archivoRuta === false) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Error al subir imagen']);
+                    exit;
+                }
+                error_log("Imagen guardada: $archivoRuta");
+                
+            } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
+                error_log("Subiendo video...");
+                error_log("Video info: " . print_r($_FILES['video'], true));
+                
+                $archivoRuta = $this->handleVideoUpload($_FILES['video']);
+                
+                if ($archivoRuta === false) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Error al subir video']);
+                    exit;
+                }
+                error_log("Video guardado: $archivoRuta");
+            }
+
+            // 💾 Insertar en BD
+            error_log("Insertando en BD...");
+            
+            $query = "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
+                      VALUES (?, ?, ?, ?, ?, 'publico', NOW())";
+            
+            $params = [
+                $idUsuario,
+                (int)$idCategoria,
+                htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'),
+                $tipo,
+                $archivoRuta
+            ];
+
+            error_log("Query: $query");
+            error_log("Params: " . print_r($params, true));
+
+            $this->db->query($query, $params);
+
+            error_log("✅ Publicación creada");
+
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Publicación creada exitosamente'
+            ]);
+
+        } catch (\PDOException $e) {
+            error_log("❌ PDO Error: " . $e->getMessage());
+            error_log("SQL State: " . $e->getCode());
+            error_log("Stack: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Error de base de datos',
+                'message' => 'No se pudo guardar la publicación',
+                'details' => $e->getMessage()
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("❌ Error general: " . $e->getMessage());
+            error_log("Stack: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Error al crear publicación',
+                'message' => $e->getMessage()
+            ]);
+        }
+
+        exit;
+    }
+
+    /**
+     * 📄 Mostrar publicación individual
+     */
+    public function show($params = [])
+    {
+        $postId = $params['id'] ?? null;
+
+        if (!$postId || !is_numeric($postId)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'ID inválido']);
+            return;
+        }
+
+        try {
+            $post = $this->db->query("
+                SELECT p.*, u.username, u.Nombre, u.fotoPerfil, c.nombre AS categoriaNombre
+                FROM publicaciones p
+                JOIN users u ON p.idUsuario = u.idUsuario
+                LEFT JOIN categorias c ON p.idCategoria = c.idCategoria
+                WHERE p.idPublicacion = ? AND p.estado = 'publico'
+            ", [$postId])->find();
+
+            if (!$post) {
+                http_response_code(404);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Publicación no encontrada']);
+                return;
+            }
+
+            header('Content-Type: application/json');
+            echo json_encode($post, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Error interno', 'detalles' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * ❤️ Like/Unlike
+     */
+    public function like()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (!isset($_SESSION['user'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'No autenticado']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método no permitido']);
+            return;
+        }
+
+        $idUsuario = $_SESSION['user']['idUsuario'];
+        $postId = $_POST['postId'] ?? null;
+
+        if (!$postId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID de publicación faltante']);
+            return;
+        }
+
+        try {
+            $likeExistente = $this->db->query(
+                "SELECT idLike FROM likes WHERE idUsuario = ? AND idPublicacion = ?",
+                [$idUsuario, $postId]
+            )->find();
+
+            if ($likeExistente) {
+                $this->db->query("DELETE FROM likes WHERE idUsuario = ? AND idPublicacion = ?", [$idUsuario, $postId]);
+                $this->db->query("UPDATE publicaciones SET likes = GREATEST(likes - 1, 0) WHERE idPublicacion = ?", [$postId]);
+                $accion = 'unliked';
             } else {
-                if (response.status === 401) {
-                    mensaje.className = 'mensaje error';
-                    mensaje.textContent = '🔒 Sesión expirada. Redirigiendo...';
-                    mensaje.style.display = 'block';
-                    
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
-                } else {
-                    throw new Error(data.error || data.message || 'Error desconocido');
+                $this->db->query("INSERT INTO likes (idUsuario, idPublicacion) VALUES (?, ?)", [$idUsuario, $postId]);
+                $this->db->query("UPDATE publicaciones SET likes = likes + 1 WHERE idPublicacion = ?", [$postId]);
+                $accion = 'liked';
+            }
+
+            $nuevoTotal = $this->db->query(
+                "SELECT likes FROM publicaciones WHERE idPublicacion = ?",
+                [$postId]
+            )->find()['likes'] ?? 0;
+
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'accion' => $accion,
+                'likes' => $nuevoTotal
+            ]);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Error al procesar like',
+                'detalles' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * 🖼️ Subir imagen
+     */
+    private function handleImageUpload($file)
+    {
+        try {
+            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+                return null;
+            }
+
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                error_log("Error en upload: " . $file['error']);
+                return false;
+            }
+
+            if ($file['size'] > 5 * 1024 * 1024) {
+                error_log("Imagen muy grande: " . $file['size']);
+                return false;
+            }
+
+            $mime = mime_content_type($file['tmp_name']);
+            $extensionesPermitidas = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp'
+            ];
+
+            if (!isset($extensionesPermitidas[$mime])) {
+                error_log("Tipo MIME no permitido: $mime");
+                return false;
+            }
+
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/imagenes/';
+            
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    error_log("No se pudo crear directorio: $uploadDir");
+                    return false;
                 }
             }
-        } catch (error) {
-            console.error('❌ Error:', error);
-            mensaje.className = 'mensaje error';
-            mensaje.textContent = '❌ ' + (error.message || 'Error de conexión');
-            mensaje.style.display = 'block';
-            
-            submitBtn.disabled = false;
-            btnIcon.textContent = '✓';
-            btnText.textContent = 'Publicar';
-        }
-    });
-});
-</script>
 
-<?php require 'partials/footer.php'; ?>
+            $extension = $extensionesPermitidas[$mime];
+            $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
+            $rutaCompleta = $uploadDir . $filename;
+            $rutaRelativa = '/uploads/posts/imagenes/' . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $rutaCompleta)) {
+                error_log("No se pudo mover archivo a: $rutaCompleta");
+                return false;
+            }
+
+            error_log("Imagen guardada: $rutaRelativa");
+            return $rutaRelativa;
+
+        } catch (\Exception $e) {
+            error_log("Excepción en handleImageUpload: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 🎥 Subir video
+     */
+    private function handleVideoUpload($file)
+    {
+        try {
+            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+                return null;
+            }
+
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                error_log("Error en upload: " . $file['error']);
+                return false;
+            }
+
+            if ($file['size'] > 50 * 1024 * 1024) {
+                error_log("Video muy grande: " . $file['size']);
+                return false;
+            }
+
+            $mime = mime_content_type($file['tmp_name']);
+            $extensionesPermitidas = [
+                'video/mp4' => 'mp4',
+                'video/quicktime' => 'mov',
+                'video/x-msvideo' => 'avi'
+            ];
+
+            if (!isset($extensionesPermitidas[$mime])) {
+                error_log("Tipo MIME no permitido: $mime");
+                return false;
+            }
+
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/videos/';
+            
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    error_log("No se pudo crear directorio: $uploadDir");
+                    return false;
+                }
+            }
+
+            $extension = $extensionesPermitidas[$mime];
+            $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
+            $rutaCompleta = $uploadDir . $filename;
+            $rutaRelativa = '/uploads/posts/videos/' . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $rutaCompleta)) {
+                error_log("No se pudo mover archivo a: $rutaCompleta");
+                return false;
+            }
+
+            error_log("Video guardado: $rutaRelativa");
+            return $rutaRelativa;
+
+        } catch (\Exception $e) {
+            error_log("Excepción en handleVideoUpload: " . $e->getMessage());
+            return false;
+        }
+    }
+}
