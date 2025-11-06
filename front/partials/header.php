@@ -26,7 +26,7 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
     <div class="header-contenido contenedor">
       <a href="/" class="logo">
         <i class="fas fa-futbol"></i>
-        <h1>MundialFan - Aun en desarrollo</h1>
+        <h1>MundialFan - BETAv</h1>
       </a>
     </div>
   </header>
