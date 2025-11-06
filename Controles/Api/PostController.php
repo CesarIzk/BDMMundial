@@ -295,33 +295,69 @@ class PostController
     }
 
     // === FUNCIONES PRIVADAS ===
-    private function handleImageUpload($file)
-    {
-        if ($file['error'] === 4) return null;
-        if ($file['size'] > 5 * 1024 * 1024) return false;
-        $mime = mime_content_type($file['tmp_name']);
-        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif'])) return false;
+ /**
+ * 🖼️ Manejar subida de imágenes de publicaciones
+ */
+private function handleImageUpload($file)
+{
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
 
-        $dir = 'imagenes/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
-        $path = $dir . $name;
+    // Validaciones básicas
+    if ($file['size'] > 5 * 1024 * 1024) return false;
+    $mime = mime_content_type($file['tmp_name']);
+    $extensionesPermitidas = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp'
+    ];
+    if (!isset($extensionesPermitidas[$mime])) return false;
 
-        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
+    // 📁 Crear carpeta si no existe
+    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/imagenes/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
     }
 
-    private function handleVideoUpload($file)
-    {
-        if ($file['error'] === 4) return null;
-        if ($file['size'] > 50 * 1024 * 1024) return false;
-        $mime = mime_content_type($file['tmp_name']);
-        if (!in_array($mime, ['video/mp4', 'video/quicktime', 'video/x-msvideo'])) return false;
+    // 🔤 Nombre seguro y único
+    $extension = $extensionesPermitidas[$mime];
+    $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
+    $rutaCompleta = $uploadDir . $filename;
+    $rutaRelativa = '/uploads/posts/imagenes/' . $filename;
 
-        $dir = 'videos/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', basename($file['name']));
-        $path = $dir . $name;
+    // 📦 Mover el archivo
+    return move_uploaded_file($file['tmp_name'], $rutaCompleta) ? $rutaRelativa : false;
+}
 
-        return move_uploaded_file($file['tmp_name'], $path) ? $path : false;
+/**
+ * 🎥 Manejar subida de videos de publicaciones
+ */
+private function handleVideoUpload($file)
+{
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
+
+    if ($file['size'] > 50 * 1024 * 1024) return false;
+    $mime = mime_content_type($file['tmp_name']);
+    $extensionesPermitidas = [
+        'video/mp4' => 'mp4',
+        'video/quicktime' => 'mov',
+        'video/x-msvideo' => 'avi'
+    ];
+    if (!isset($extensionesPermitidas[$mime])) return false;
+
+    // 📁 Crear carpeta si no existe
+    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/videos/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
     }
+
+    // 🔤 Nombre seguro
+    $extension = $extensionesPermitidas[$mime];
+    $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
+    $rutaCompleta = $uploadDir . $filename;
+    $rutaRelativa = '/uploads/posts/videos/' . $filename;
+
+    return move_uploaded_file($file['tmp_name'], $rutaCompleta) ? $rutaRelativa : false;
+}
+
 }
