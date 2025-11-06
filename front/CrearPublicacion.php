@@ -433,44 +433,75 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Enviar formulario
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const formData = new FormData(form);
-        const submitBtn = form.querySelector('button[type="submit"]');
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Publicando...';
+    mensaje.style.display = 'none';
+
+    try {
+        console.log('Enviando petición a /Post/store...');
         
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Publicando...';
-        mensaje.style.display = 'none';
+        const response = await fetch('/Post/store', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin' // ✅ IMPORTANTE: Incluir cookies de sesión
+        });
 
-        try {
-            const response = await fetch('/Post/store', {
-                method: 'POST',
-                body: formData
-            });
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
 
-            const data = await response.json();
+        // Intentar parsear JSON
+        let data;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // Si no es JSON, obtener el texto para debug
+            const text = await response.text();
+            console.error('Respuesta no es JSON:', text);
+            throw new Error('Respuesta del servidor inválida');
+        }
 
-            if (response.ok) {
-                mensaje.className = 'mensaje exito';
-                mensaje.textContent = '¡Publicación creada exitosamente!';
+        console.log('Response data:', data);
+
+        if (response.ok && data.success) {
+            mensaje.className = 'mensaje exito';
+            mensaje.textContent = '¡Publicación creada exitosamente!';
+            mensaje.style.display = 'block';
+            
+            // Esperar y redirigir
+            setTimeout(() => {
+                window.location.href = '/Post';
+            }, 1500);
+        } else {
+            // Manejar errores específicos
+            if (response.status === 401) {
+                mensaje.className = 'mensaje error';
+                mensaje.textContent = 'Sesión expirada. Redirigiendo al inicio...';
                 mensaje.style.display = 'block';
                 
                 setTimeout(() => {
-                    window.location.href = '/Post';
-                }, 1500);
+                    window.location.href = '/';
+                }, 2000);
             } else {
-                throw new Error(data.error || 'Error al crear la publicación');
+                throw new Error(data.error || 'Error desconocido');
             }
-        } catch (error) {
-            mensaje.className = 'mensaje error';
-            mensaje.textContent = error.message;
-            mensaje.style.display = 'block';
-            
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Publicar';
         }
-    });
+    } catch (error) {
+        console.error('Error completo:', error);
+        mensaje.className = 'mensaje error';
+        mensaje.textContent = error.message || 'Error de conexión';
+        mensaje.style.display = 'block';
+        
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Publicar';
+    }
 });
 </script>
 

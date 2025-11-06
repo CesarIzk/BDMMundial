@@ -14,5 +14,6 @@ node_modules/
 !avatars/
 !posts/
 !posts/imagenes/
-!uploads
+!uploads/avatars/users
 !posts/videos/
+!users
