@@ -77,7 +77,7 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
       <?php endif; ?>
 
       <!-- 🧾 NOMBRE + ICONO -->
-      <span class="d-none d-md-inline fw-semibold"><?= htmlspecialchars($user['Nombre'] ?? 'Usuario') ?></span>
+<span class="d-none d-md-inline fw-semibold">@<?= htmlspecialchars($user['username'] ?? 'Usuario') ?></span>
       <i class="fas fa-chevron-down ms-1 text-muted"></i>
     </button>
 
