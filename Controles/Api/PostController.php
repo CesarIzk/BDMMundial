@@ -346,7 +346,7 @@ private function getCloudinaryInstance()
     $apiKey    = $_ENV['CLOUDINARY_API_KEY'] ?? $_ENV['CLOUDINARY_KEY'] ?? '';
     $apiSecret = $_ENV['CLOUDINARY_API_SECRET'] ?? $_ENV['CLOUDINARY_APISECRET'] ?? '';
 
-    return new \Cloudinary\Cloudinary([
+    return new Cloudinary([
         'cloud' => [
             'cloud_name' => $cloudName,
             'api_key'    => $apiKey,

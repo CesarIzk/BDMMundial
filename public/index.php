@@ -15,6 +15,12 @@ spl_autoload_register(function ($class) {
 });
 
 require base_path('bootstrap.php'); // ← DESCOMENTA ESTO
+// Cargar variables de entorno de Railway si no están en $_ENV
+foreach ($_SERVER as $key => $value) {
+    if (str_starts_with($key, 'CLOUDINARY_')) {
+        $_ENV[$key] = $value;
+    }
+}
 
 $router = new \Core\Router();
 $routes = require base_path('routes.php');
