@@ -113,165 +113,124 @@ class PostController
      * Crear nueva publicación
      */
     public function store()
-    {
-        // ✅ NO iniciar sesión aquí - ya está en index.php
-        header('Content-Type: application/json; charset=utf-8');
+{
+    // 🔒 Asegurar tipo de respuesta JSON desde el inicio
+    header_remove("X-Powered-By");
+    header('Content-Type: application/json; charset=utf-8');
 
-        try {
-            // 🔍 Verificar sesión
-            if (session_status() !== PHP_SESSION_ACTIVE) {
-                throw new \Exception("Sesión no activa");
-            }
-
-            error_log("=== STORE DEBUG ===");
-            error_log("Session ID: " . session_id());
-            error_log("User exists: " . (isset($_SESSION['user']) ? 'YES' : 'NO'));
-
-            // 🔐 Verificar autenticación
-            if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
-                http_response_code(401);
-                echo json_encode([
-                    'error' => 'No autenticado',
-                    'message' => 'Debes iniciar sesión'
-                ]);
-                exit;
-            }
-
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                http_response_code(405);
-                echo json_encode(['error' => 'Método no permitido']);
-                exit;
-            }
-
-            $idUsuario = (int)$_SESSION['user']['idUsuario'];
-            error_log("User ID: $idUsuario");
-
-            // 🔍 Verificar usuario en BD
-            $user = $this->db->query(
-                "SELECT estado FROM users WHERE idUsuario = ?", 
-                [$idUsuario]
-            )->find();
-
-            if (!$user) {
-                throw new \Exception("Usuario no encontrado en BD");
-            }
-
-            if ($user['estado'] !== 'activo') {
-                http_response_code(403);
-                echo json_encode(['error' => 'Cuenta inactiva']);
-                exit;
-            }
-
-            // 📝 Obtener datos
-            $texto = trim($_POST['texto'] ?? '');
-            $tipo = $_POST['tipo'] ?? 'texto';
-            $idCategoria = $_POST['idCategoria'] ?? null;
-
-            error_log("Texto: $texto");
-            error_log("Tipo: $tipo");
-            error_log("Categoria: $idCategoria");
-
-            // ✅ Validaciones
-            if (empty($texto)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'El contenido es obligatorio']);
-                exit;
-            }
-
-            if (strlen($texto) > 500) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Máximo 500 caracteres']);
-                exit;
-            }
-
-            if (!$idCategoria || !is_numeric($idCategoria)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Categoría inválida']);
-                exit;
-            }
-
-            // 📁 Manejo de archivos
-            $archivoRuta = null;
-
-            if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
-                error_log("Subiendo imagen...");
-                error_log("Imagen info: " . print_r($_FILES['imagen'], true));
-                
-                $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
-                
-                if ($archivoRuta === false) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Error al subir imagen']);
-                    exit;
-                }
-                error_log("Imagen guardada: $archivoRuta");
-                
-            } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
-                error_log("Subiendo video...");
-                error_log("Video info: " . print_r($_FILES['video'], true));
-                
-                $archivoRuta = $this->handleVideoUpload($_FILES['video']);
-                
-                if ($archivoRuta === false) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Error al subir video']);
-                    exit;
-                }
-                error_log("Video guardado: $archivoRuta");
-            }
-
-            // 💾 Insertar en BD
-            error_log("Insertando en BD...");
-            
-            $query = "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
-                      VALUES (?, ?, ?, ?, ?, 'publico', NOW())";
-            
-            $params = [
-                $idUsuario,
-                (int)$idCategoria,
-                htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'),
-                $tipo,
-                $archivoRuta
-            ];
-
-            error_log("Query: $query");
-            error_log("Params: " . print_r($params, true));
-
-            $this->db->query($query, $params);
-
-            error_log("✅ Publicación creada");
-
-            http_response_code(200);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Publicación creada exitosamente'
-            ]);
-
-        } catch (\PDOException $e) {
-            error_log("❌ PDO Error: " . $e->getMessage());
-            error_log("SQL State: " . $e->getCode());
-            error_log("Stack: " . $e->getTraceAsString());
-            
-            http_response_code(500);
-            echo json_encode([
-                'error' => 'Error de base de datos',
-                'message' => 'No se pudo guardar la publicación',
-                'details' => $e->getMessage()
-            ]);
-            
-        } catch (\Exception $e) {
-            error_log("❌ Error general: " . $e->getMessage());
-            error_log("Stack: " . $e->getTraceAsString());
-            
-            http_response_code(500);
-            echo json_encode([
-                'error' => 'Error al crear publicación',
-                'message' => $e->getMessage()
-            ]);
+    try {
+        // 🧠 Verificar sesión
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
         }
 
+        if (!isset($_SESSION['user']) || !isset($_SESSION['user']['idUsuario'])) {
+            http_response_code(401);
+            echo json_encode(['error' => 'No autenticado', 'message' => 'Debes iniciar sesión']);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método no permitido']);
+            exit;
+        }
+
+        $idUsuario = (int)$_SESSION['user']['idUsuario'];
+
+        // ⚙️ Verificar usuario activo
+        $user = $this->db->query("SELECT estado FROM users WHERE idUsuario = ?", [$idUsuario])->find();
+        if (!$user) {
+            throw new \Exception("Usuario no encontrado en BD");
+        }
+        if ($user['estado'] !== 'activo') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Cuenta inactiva']);
+            exit;
+        }
+
+        // 📝 Obtener datos del formulario
+        $texto = trim($_POST['texto'] ?? '');
+        $tipo = $_POST['tipo'] ?? 'texto';
+        $idCategoria = $_POST['idCategoria'] ?? null;
+
+        // ⚠️ Validaciones
+        if (empty($texto)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'El contenido es obligatorio']);
+            exit;
+        }
+        if (strlen($texto) > 500) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Máximo 500 caracteres']);
+            exit;
+        }
+        if (!$idCategoria || !is_numeric($idCategoria)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Categoría inválida']);
+            exit;
+        }
+
+        // 📁 Manejo de archivos multimedia
+        $archivoRuta = null;
+
+        if ($tipo === 'imagen' && isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $archivoRuta = $this->handleImageUpload($_FILES['imagen']);
+            if ($archivoRuta === false) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Error al subir imagen']);
+                exit;
+            }
+        } elseif ($tipo === 'video' && isset($_FILES['video']) && $_FILES['video']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $archivoRuta = $this->handleVideoUpload($_FILES['video']);
+            if ($archivoRuta === false) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Error al subir video']);
+                exit;
+            }
+        }
+
+        // 💾 Guardar en BD
+        $query = "INSERT INTO publicaciones (idUsuario, idCategoria, texto, tipoContenido, rutamulti, estado, postdate)
+                  VALUES (?, ?, ?, ?, ?, 'publico', NOW())";
+
+        $params = [
+            $idUsuario,
+            (int)$idCategoria,
+            htmlspecialchars($texto, ENT_QUOTES, 'UTF-8'),
+            $tipo,
+            $archivoRuta
+        ];
+
+        $this->db->query($query, $params);
+
+        // ✅ Respuesta exitosa
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Publicación creada exitosamente',
+            'media_url' => $archivoRuta
+        ]);
+        exit;
+
+    } catch (\PDOException $e) {
+        error_log("❌ PDO Error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Error de base de datos',
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    } catch (\Exception $e) {
+        error_log("❌ Error general: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Error al crear publicación',
+            'message' => $e->getMessage()
+        ]);
         exit;
     }
+}
 
     /**
      * 📄 Mostrar publicación individual
@@ -396,6 +355,7 @@ private function isRailway()
     // Railway define esta variable automáticamente
     return isset($_ENV['RAILWAY_ENVIRONMENT']);
 }
+
 
 /**
  * 🖼️ Subir imagen (local o Cloudinary)

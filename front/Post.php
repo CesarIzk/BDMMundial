@@ -10,7 +10,7 @@
   <?php endif; ?>
 
   <!-- 🧩 Buscador -->
-  <form class="d-flex flex-wrap justify-content-center gap-3 mb-4" method="GET" action="/publiccaciones">
+  <form class="d-flex flex-wrap justify-content-center gap-3 mb-4" method="GET" action="/publicaciones">
     <input 
       type="text" 
       name="q" 
