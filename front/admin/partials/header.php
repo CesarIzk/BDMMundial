@@ -1,5 +1,4 @@
 <?php
-// front/admin/partials/header.php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -18,7 +17,7 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="/css/styles.css?v=1.0.13">
+  <link rel="stylesheet" href="/css/styles.css?v=1.0.15">
 </head>
 
 <body>
@@ -26,26 +25,30 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
     <div class="header-contenido contenedor">
       <a href="/admin/dashboard" class="logo">
         <i class="fas fa-shield-halved"></i>
-        <h1>MundialFan - Panel de Admin</h1>
+        <h1>MundialFan - Panel Admin</h1>
       </a>
     </div>
   </header>
 
   <nav>
     <div class="nav-wrap">
-      <button class="menu-toggle" aria-label="Menú">
-        <i class="fas fa-bars"></i>
-      </button>
+      <!-- Botón hamburguesa -->
+     <!-- Botón hamburguesa -->
+<button class="menu-toggle admin-toggle" aria-label="Menú">
+  <i class="fas fa-bars"></i>
+</button>
 
-      <ul class="navbar" id="navbar-menu">
-        <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-        <li><a href="/admin/usuarios"><i class="fas fa-users-cog"></i> <span>Usuarios</span></a></li>
-        <li><a href="/admin/publiccaciones"><i class="fas fa-file-alt"></i> <span>Publicaciones</span></a></li>
-        <li><a href="/admin/paises"><i class="fas fa-flag"></i> <span>Países</span></a></li>
-        <li><a href="/admin/reportes"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
-        <li><a href="/"><i class="fas fa-globe"></i> <span>Ver Sitio</span></a></li>
-      </ul>
+<!-- Menú principal -->
+<ul class="navbar" id="admin-navbar-menu">
+  <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+  <li><a href="/admin/usuarios"><i class="fas fa-users-cog"></i> <span>Usuarios</span></a></li>
+  <li><a href="/admin/publicaciones"><i class="fas fa-file-alt"></i> <span>Publicaciones</span></a></li>
+  <li><a href="/admin/paises"><i class="fas fa-flag"></i> <span>Países</span></a></li>
+  <li><a href="/admin/reportes"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+  <li><a href="/"><i class="fas fa-globe"></i> <span>Ver Sitio</span></a></li>
+</ul>
 
+      <!-- Botones de usuario y modo -->
       <div class="auth-buttons">
         <button id="toggle-mode-header" class="toggle-btn" aria-label="Cambiar modo">
           <i class="fas fa-moon"></i>
@@ -76,10 +79,3 @@ $user = $isLoggedIn ? $_SESSION['user'] : null;
       </div>
     </div>
   </nav>
-
-  <main class="admin-container container mt-4">
-
-  <!-- Bootstrap JS al final del body -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/dark-mode.js"></script>
-  <script src="/js/navbar-mobile.js"></script>
