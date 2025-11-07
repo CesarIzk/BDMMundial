@@ -2,7 +2,9 @@
 
 namespace Controles\Api;
 
+
 use Core\App;
+use Cloudinary\Cloudinary;
 
 class PostController
 {
@@ -78,7 +80,7 @@ class PostController
             strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
         ) {
             foreach ($posts as $post) {
-                require base_path('views/partials/postCard.php');
+                require base_path('views/partials/publicCard.php');
             }
             return;
         }
@@ -376,124 +378,91 @@ class PostController
         }
     }
 
-    /**
-     * 🖼️ Subir imagen
-     */
-    private function handleImageUpload($file)
-    {
-        try {
-            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
-                return null;
-            }
 
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                error_log("Error en upload: " . $file['error']);
-                return false;
-            }
 
-            if ($file['size'] > 5 * 1024 * 1024) {
-                error_log("Imagen muy grande: " . $file['size']);
-                return false;
-            }
+private function getCloudinaryInstance()
+{
+    return new Cloudinary([
+        'cloud' => [
+            'cloud_name' => $_ENV['CLOUDINARY_CLOUD_NAME'] ?? '',
+            'api_key'    => $_ENV['CLOUDINARY_API_KEY'] ?? '',
+            'api_secret' => $_ENV['CLOUDINARY_API_SECRET'] ?? ''
+        ]
+    ]);
+}
 
-            $mime = mime_content_type($file['tmp_name']);
-            $extensionesPermitidas = [
-                'image/jpeg' => 'jpg',
-                'image/png' => 'png',
-                'image/gif' => 'gif',
-                'image/webp' => 'webp'
-            ];
+private function isRailway()
+{
+    // Railway define esta variable automáticamente
+    return isset($_ENV['RAILWAY_ENVIRONMENT']);
+}
 
-            if (!isset($extensionesPermitidas[$mime])) {
-                error_log("Tipo MIME no permitido: $mime");
-                return false;
-            }
+/**
+ * 🖼️ Subir imagen (local o Cloudinary)
+ */
+private function handleImageUpload($file)
+{
+    try {
+        if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
+        if ($file['error'] !== UPLOAD_ERR_OK) return false;
 
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/imagenes/';
-            
-            if (!is_dir($uploadDir)) {
-                if (!mkdir($uploadDir, 0755, true)) {
-                    error_log("No se pudo crear directorio: $uploadDir");
-                    return false;
-                }
-            }
-
-            $extension = $extensionesPermitidas[$mime];
-            $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
-            $rutaCompleta = $uploadDir . $filename;
-            $rutaRelativa = '/uploads/posts/imagenes/' . $filename;
-
-            if (!move_uploaded_file($file['tmp_name'], $rutaCompleta)) {
-                error_log("No se pudo mover archivo a: $rutaCompleta");
-                return false;
-            }
-
-            error_log("Imagen guardada: $rutaRelativa");
-            return $rutaRelativa;
-
-        } catch (\Exception $e) {
-            error_log("Excepción en handleImageUpload: " . $e->getMessage());
-            return false;
+        // Si estamos en Railway -> Cloudinary
+        if ($this->isRailway()) {
+            $cloudinary = $this->getCloudinaryInstance();
+            $upload = $cloudinary->uploadApi()->upload($file['tmp_name'], [
+                'folder' => 'mundialfan/imagenes'
+            ]);
+            return $upload['secure_url'];
         }
+
+        // Local (desarrollo)
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/publics/imagenes/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'post_' . time() . '_' . uniqid() . '.' . $ext;
+        $rutaRelativa = '/uploads/publics/imagenes/' . $filename;
+        move_uploaded_file($file['tmp_name'], $uploadDir . $filename);
+
+        return $rutaRelativa;
+    } catch (\Exception $e) {
+        error_log("Cloudinary upload error: " . $e->getMessage());
+        return false;
     }
+}
 
-    /**
-     * 🎥 Subir video
-     */
-    private function handleVideoUpload($file)
-    {
-        try {
-            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
-                return null;
-            }
+/**
+ * 🎥 Subir video (local o Cloudinary)
+ */
+private function handleVideoUpload($file)
+{
+    try {
+        if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
+        if ($file['error'] !== UPLOAD_ERR_OK) return false;
 
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                error_log("Error en upload: " . $file['error']);
-                return false;
-            }
-
-            if ($file['size'] > 50 * 1024 * 1024) {
-                error_log("Video muy grande: " . $file['size']);
-                return false;
-            }
-
-            $mime = mime_content_type($file['tmp_name']);
-            $extensionesPermitidas = [
-                'video/mp4' => 'mp4',
-                'video/quicktime' => 'mov',
-                'video/x-msvideo' => 'avi'
-            ];
-
-            if (!isset($extensionesPermitidas[$mime])) {
-                error_log("Tipo MIME no permitido: $mime");
-                return false;
-            }
-
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/posts/videos/';
-            
-            if (!is_dir($uploadDir)) {
-                if (!mkdir($uploadDir, 0755, true)) {
-                    error_log("No se pudo crear directorio: $uploadDir");
-                    return false;
-                }
-            }
-
-            $extension = $extensionesPermitidas[$mime];
-            $filename = 'post_' . time() . '_' . uniqid() . '.' . $extension;
-            $rutaCompleta = $uploadDir . $filename;
-            $rutaRelativa = '/uploads/posts/videos/' . $filename;
-
-            if (!move_uploaded_file($file['tmp_name'], $rutaCompleta)) {
-                error_log("No se pudo mover archivo a: $rutaCompleta");
-                return false;
-            }
-
-            error_log("Video guardado: $rutaRelativa");
-            return $rutaRelativa;
-
-        } catch (\Exception $e) {
-            error_log("Excepción en handleVideoUpload: " . $e->getMessage());
-            return false;
+        if ($this->isRailway()) {
+            $cloudinary = $this->getCloudinaryInstance();
+            $upload = $cloudinary->uploadApi()->upload($file['tmp_name'], [
+                'resource_type' => 'video',
+                'folder' => 'mundialfan/videos'
+            ]);
+            return $upload['secure_url'];
         }
+
+        // Local
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/publics/videos/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'post_' . time() . '_' . uniqid() . '.' . $ext;
+        $rutaRelativa = '/uploads/publics/videos/' . $filename;
+        move_uploaded_file($file['tmp_name'], $uploadDir . $filename);
+
+        return $rutaRelativa;
+    } catch (\Exception $e) {
+        error_log("Cloudinary video upload error: " . $e->getMessage());
+        return false;
     }
+}
+
 }

@@ -7,12 +7,12 @@ $router->get('/logout', 'Controles/Api/AuthController@logout');
 
 // ========== PUBLICACIONES ==========
 // ========== PUBLICACIONES ==========
-$router->post('/Post/store', 'Controles\Api\PostController@store'); // ✅ ANTES
-$router->post('/Post/like', 'Controles\Api\PostController@like');
-$router->get('/Post/create', 'Controles\Api\PostController@create');
-$router->get('/Post', 'Controles\Api\PostController@index'); // ✅ DESPUÉS
-$router->get('/Post/{id}', 'Controles\Api\PostController@show');
-$router->get('/Post/view', 'Controles\Api\PostController@show'); // Nueva ruta
+$router->post('/public/store', 'Controles\Api\PostController@store'); // ✅ ANTES
+$router->post('/public/like', 'Controles\Api\PostController@like');
+$router->get('/public/create', 'Controles\Api\PostController@create');
+$router->get('/public', 'Controles\Api\PostController@index'); // ✅ DESPUÉS
+$router->get('/public/{id}', 'Controles\Api\PostController@show');
+$router->get('/public/view', 'Controles\Api\PostController@show'); // Nueva ruta
 
 // ========== PERFIL ==========
 $router->get('/perfil', 'controls/perfil.php')->only('auth');

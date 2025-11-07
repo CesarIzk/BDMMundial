@@ -41,7 +41,7 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
         <li><a href="/"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
         <li><a href="/campeonatos"><i class="fas fa-trophy"></i> <span>Campeonatos</span></a></li>
         <li><a href="/equipos"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
-        <li><a href="/Post"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
+        <li><a href="/public"><i class="fas fa-calendar-alt"></i> <span>Publicaciones</span></a></li>
         <li><a href="/stats"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
         <li><a href="/tienda"><i class="fas fa-store"></i> <span>Tienda</span></a></li>
   
@@ -50,7 +50,7 @@ $isAdmin = isset($_SESSION['user']) && $_SESSION['user']['rol'] === 'admin';
 
       <div class="auth-buttons">
         <?php if ($isLoggedIn): ?>
-          <a href="/Post/create" class="btn-crear-post" title="Nueva Publicación">
+          <a href="/public/create" class="btn-crear-post" title="Nueva Publicación">
             <i class="fas fa-plus-circle"></i> <span>Publicar</span>
           </a>
         <?php endif; ?>

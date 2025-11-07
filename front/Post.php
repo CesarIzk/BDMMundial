@@ -10,7 +10,7 @@
   <?php endif; ?>
 
   <!-- 🧩 Buscador -->
-  <form class="d-flex flex-wrap justify-content-center gap-3 mb-4" method="GET" action="/publicaciones">
+  <form class="d-flex flex-wrap justify-content-center gap-3 mb-4" method="GET" action="/publiccaciones">
     <input 
       type="text" 
       name="q" 
@@ -129,13 +129,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         // 1️⃣ Cargar publicación
-        let res = await fetch(`/Post/view?id=${postId}`);
-        if (!res.ok) res = await fetch(`/Post/${postId}`);
+        let res = await fetch(`/public/view?id=${postId}`);
+        if (!res.ok) res = await fetch(`/public/${postId}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const post = await res.json();
 
         // 2️⃣ Cargar comentarios
-        const comentariosRes = await fetch(`/api/comentarios`);
+       const comentariosRes = await fetch(`/api/comentarios/${post.idPublicacion}`);
+
         const comentarios = comentariosRes.ok ? await comentariosRes.json() : [];
 
         // === MEDIOS ===
@@ -161,10 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
               <ul class="list-group mt-3">
                 ${comentarios.map(c => `
                   <li class="list-group-item">
-                    <strong>@${c.username}</strong>
-                    <p class="mb-1">${c.texto}</p>
-                    <small class="text-muted">${c.fechaComentario}</small>
-                  </li>
+  <strong>@${c.username || 'Anónimo'}</strong>
+  <p class="mb-1">${c.contenido || ''}</p>
+  <small class="text-muted">${c.fecha || ''}</small>
+</li>
+
                 `).join('')}
               </ul>
             </div>
@@ -218,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const resp = await fetch('/api/comentarios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `idPublicacion=${post.idPublicacion}&texto=${encodeURIComponent(texto)}`
+            body: `idPublicacion=${post.idPublicacion}&contenido=${encodeURIComponent(texto)}`
           });
 
           if (resp.ok) {
