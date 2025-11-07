@@ -14,13 +14,18 @@ spl_autoload_register(function ($class) {
     require base_path("{$class}.php");
 });
 
-require base_path('bootstrap.php'); // ← DESCOMENTA ESTO
-// Cargar variables de entorno de Railway si no están en $_ENV
+// 1️⃣ Autoload Composer
+require __DIR__ . '/../vendor/autoload.php';
+
+// 2️⃣ Cargar variables de Railway en $_ENV
 foreach ($_SERVER as $key => $value) {
     if (str_starts_with($key, 'CLOUDINARY_')) {
         $_ENV[$key] = $value;
     }
 }
+
+// 3️⃣ Inicializar tu app
+require base_path('bootstrap.php');
 
 $router = new \Core\Router();
 $routes = require base_path('routes.php');

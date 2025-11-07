@@ -114,6 +114,12 @@ class PostController
      */
     public function store()
 {
+    error_log('🌩️ ENV VARS => ' . json_encode([
+    'CLOUDINARY_NAME' => $_ENV['CLOUDINARY_NAME'] ?? null,
+    'CLOUDINARY_KEY' => $_ENV['CLOUDINARY_KEY'] ?? null,
+    'CLOUDINARY_APISECRET' => $_ENV['CLOUDINARY_APISECRET'] ?? null
+]));
+
     // 🔒 Asegurar tipo de respuesta JSON desde el inicio
     header_remove("X-Powered-By");
     header('Content-Type: application/json; charset=utf-8');
@@ -341,10 +347,18 @@ class PostController
 
 private function getCloudinaryInstance()
 {
-    // Compatibilidad entre local (.env) y Railway
     $cloudName = $_ENV['CLOUDINARY_CLOUD_NAME'] ?? $_ENV['CLOUDINARY_NAME'] ?? '';
     $apiKey    = $_ENV['CLOUDINARY_API_KEY'] ?? $_ENV['CLOUDINARY_KEY'] ?? '';
     $apiSecret = $_ENV['CLOUDINARY_API_SECRET'] ?? $_ENV['CLOUDINARY_APISECRET'] ?? '';
+
+    if (empty($cloudName) || empty($apiKey) || empty($apiSecret)) {
+        error_log("⚠️ Cloudinary no configurado correctamente: " . json_encode([
+            'name' => $cloudName,
+            'key' => $apiKey,
+            'secret' => $apiSecret
+        ]));
+        throw new \Exception("Cloudinary credentials missing");
+    }
 
     return new Cloudinary([
         'cloud' => [
@@ -354,6 +368,7 @@ private function getCloudinaryInstance()
         ]
     ]);
 }
+
 
 
 private function isRailway()
