@@ -3,6 +3,7 @@
 namespace Controles\Api;
 
 use Controles\Models\User;
+use Cloudinary\Cloudinary;
 
 class PerfilController
 {
@@ -153,19 +154,16 @@ $_SESSION['success'] = "Perfil actualizado correctamente.";
     /**
      * Actualizar avatar
      */
- public function updateAvatar()
+public function updateAvatar()
 {
     $this->authorizeUser();
-
     $id = $_SESSION['user']['idUsuario'];
 
-    // 🧾 Verificar que se subió un archivo
     if (empty($_FILES['avatar']['name'])) {
         $_SESSION['error'] = "No se seleccionó ningún archivo.";
         return redirect('/configuracion');
     }
 
-    // ⚠️ Verificar errores del archivo
     if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
         $_SESSION['error'] = "Error al subir el archivo (código: " . $_FILES['avatar']['error'] . ").";
         return redirect('/configuracion');
@@ -191,39 +189,62 @@ $_SESSION['success'] = "Perfil actualizado correctamente.";
         return redirect('/configuracion');
     }
 
-    // 🗂️ Crear carpeta personalizada del usuario
-    $userDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/users/' . $id . '/avatar/';
-    if (!is_dir($userDir)) {
-        mkdir($userDir, 0755, true);
-    }
-
-    // 🧾 Generar nombre seguro y único
+    // 🧾 Generar nombre único
     $extension = $allowedTypes[$fileType];
-    $fileName = 'avatar_' . time() . '.' . $extension;
-    $rutaCompleta = $userDir . $fileName;
-    $rutaRelativa = '/uploads/users/' . $id . '/avatar/' . $fileName;
+    $fileName = 'avatar_' . $id . '_' . time() . '.' . $extension;
 
-    // 🚚 Mover el archivo
-    if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $rutaCompleta)) {
-        $_SESSION['error'] = "No se pudo guardar la imagen en el servidor.";
-        return redirect('/configuracion');
+    // 🌐 Si estamos en Railway (usa Cloudinary)
+    if (isset($_ENV['CLOUDINARY_URL']) && !empty($_ENV['CLOUDINARY_URL'])) {
+        try {
+            $cloudinary = new Cloudinary($_ENV['CLOUDINARY_URL']);
+
+            // Subir a carpeta personalizada del usuario
+            $upload = $cloudinary->uploadApi()->upload($_FILES['avatar']['tmp_name'], [
+                'folder' => "mundialfan/usuarios/$id/avatar",
+                'public_id' => pathinfo($fileName, PATHINFO_FILENAME),
+                'overwrite' => true,
+                'resource_type' => 'image'
+            ]);
+
+            $rutaRelativa = $upload['secure_url'];
+            error_log("☁️ Avatar subido a Cloudinary: " . $rutaRelativa);
+        } catch (\Exception $e) {
+            error_log("❌ Error Cloudinary avatar: " . $e->getMessage());
+            $_SESSION['error'] = "Error al subir la imagen a Cloudinary.";
+            return redirect('/configuracion');
+        }
+    } else {
+        // 🗂️ Guardar localmente en desarrollo
+        $userDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/users/' . $id . '/avatar/';
+        if (!is_dir($userDir)) mkdir($userDir, 0755, true);
+
+        $rutaCompleta = $userDir . $fileName;
+        $rutaRelativa = '/uploads/users/' . $id . '/avatar/' . $fileName;
+
+        if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $rutaCompleta)) {
+            $_SESSION['error'] = "No se pudo guardar la imagen localmente.";
+            return redirect('/configuracion');
+        }
     }
 
-    // 🧹 Eliminar foto anterior si existe
+    // 🧹 Borrar imagen anterior (solo local)
     if (!empty($_SESSION['user']['fotoPerfil'])) {
-        $anterior = $_SERVER['DOCUMENT_ROOT'] . $_SESSION['user']['fotoPerfil'];
-        if (file_exists($anterior)) {
-            @unlink($anterior);
+        $anterior = $_SESSION['user']['fotoPerfil'];
+        if (strpos($anterior, 'cloudinary.com') === false) {
+            $rutaLocal = $_SERVER['DOCUMENT_ROOT'] . $anterior;
+            if (file_exists($rutaLocal)) {
+                @unlink($rutaLocal);
+            }
         }
     }
 
     // 💾 Actualizar base de datos
     $this->userModel->update($id, ['fotoPerfil' => $rutaRelativa]);
 
-    // 🔄 Refrescar sesión
+    // 🔄 Actualizar sesión
     $_SESSION['user']['fotoPerfil'] = $rutaRelativa;
-
     $_SESSION['success'] = "Foto de perfil actualizada correctamente.";
+
     return redirect('/perfil');
 }
 
