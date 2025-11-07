@@ -265,5 +265,61 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<script>
+// ==== SISTEMA DE LIKES ====
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".zzz-like").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation(); // evita abrir el modal
+      const postId = btn.dataset.postId;
+      if (!postId) return;
+
+      try {
+        // Enviar el like al servidor
+        const resp = await fetch("/public/like", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: `postId=${encodeURIComponent(postId)}`
+        });
+
+        if (!resp.ok) {
+          if (resp.status === 401) {
+            alert("⚠️ Debes iniciar sesión para dar like.");
+          } else {
+            throw new Error(`Error ${resp.status}`);
+          }
+          return;
+        }
+
+        // Procesar respuesta JSON
+        const data = await resp.json();
+
+        if (data.success) {
+          const countSpan = btn.querySelector(".like-count");
+          let current = parseInt(countSpan.textContent) || 0;
+
+          if (data.accion === "liked") {
+            current++;
+            btn.classList.add("liked");
+          } else {
+            current = Math.max(0, current - 1);
+            btn.classList.remove("liked");
+          }
+
+          countSpan.textContent = current;
+        } else {
+          console.warn("Respuesta no esperada:", data);
+        }
+
+      } catch (err) {
+        console.error("❌ Error al procesar el like:", err);
+        alert("Ocurrió un error al intentar dar like.");
+      }
+    });
+  });
+});
+</script>
 
 <?php require 'partials/footer.php'; ?>
