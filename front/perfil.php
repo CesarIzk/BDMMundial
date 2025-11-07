@@ -45,7 +45,7 @@
                 <strong>Biografía:</strong><br>
                 <span class="text-muted"><?php echo nl2br(htmlspecialchars($userData['biografia'])); ?></span>
               </li>
-              <?php endif; ?>
+              <?php endif; ?> 
 
               <?php if (!empty($userData['fechaNacimiento'])): ?>
               <li class="list-group-item">

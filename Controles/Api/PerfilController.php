@@ -26,6 +26,8 @@ class PerfilController
 
     // ✅ Actualizar sesión (para que quede sincronizada)
     $_SESSION['user'] = $user;
+error_log("🧠 PERFIL - ID USUARIO: " . $_SESSION['user']['idUsuario']);
+error_log("🧠 PERFIL - RESULTADO BD: " . print_r($user, true));
 
     // ✅ Pasar la variable con el nombre correcto para la vista
     return view('perfil.php', ['userData' => $user]);

@@ -34,6 +34,7 @@
 @import url('sections/equipos.css');
 @import url('sections/comentarios.css');
 @import url('sections/dark-mode.css');
+@import url('sections/crearpost.css');
 
 /* ===== UTILITIES ===== */
 @import url('utils/animations.css');

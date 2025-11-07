@@ -15,8 +15,7 @@ $router->get('/public/{id}', 'Controles\Api\PostController@show');
 $router->get('/public/view', 'Controles\Api\PostController@show'); // Nueva ruta
 
 // ========== PERFIL ==========
-$router->get('/perfil', 'controls/perfil.php')->only('auth');
-$router->get('/perfil/show', 'Controles/Api/PerfilController@show')->only('auth');
+$router->get('/perfil', 'Controles/Api/PerfilController@show')->only('auth');
 $router->get('/configuracion', 'Controles/Api/PerfilController@index')->only('auth');
 
 // --- Acciones del perfil ---
@@ -24,6 +23,7 @@ $router->post('/perfil/update', 'Controles/Api/PerfilController@update')->only('
 $router->post('/perfil/avatar', 'Controles/Api/PerfilController@updateAvatar')->only('auth');
 $router->post('/perfil/password', 'Controles/Api/PerfilController@changePassword')->only('auth');
 $router->post('/perfil/deactivate', 'Controles/Api/PerfilController@deactivate')->only('auth');
+
 
 // ========== SECCIÓN DE ADMINISTRACIÓN ==========
 $router->get('/admin/dashboard', 'Controles/Api/AdminController@dashboard')->only('admin');

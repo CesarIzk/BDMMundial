@@ -27,13 +27,32 @@ class User
     /**
      * Buscar usuario por ID
      */
-    public function findById($id)
-    {
-        return $this->db->query(
-            'SELECT * FROM users WHERE idUsuario = ?',
-            [$id]
-        )->find();
-    }
+public function findById($id)
+{
+    return $this->db->query("
+        SELECT 
+            idUsuario,
+            Nombre,
+            email,
+            username,
+            contrasena,
+            rol,
+            fechaNacimiento,
+            genero,
+            ciudad,
+            pais,
+            fotoPerfil,
+            biografia,
+            estado,
+            fechaRegistro,
+            ultimaActividad,
+            totalPublicaciones
+        FROM users
+        WHERE idUsuario = ?
+    ", [$id])->find();
+}
+
+
 
     /**
      * Buscar usuario por username

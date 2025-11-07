@@ -6,10 +6,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!menuToggle || !navbar) return;
 
   // Abre/cierra el menú
-  menuToggle.addEventListener("click", () => {
-    navbar.classList.toggle("active");
-    menuToggle.classList.toggle("active");
-  });
+menuToggle.addEventListener("click", () => {
+  navbar.classList.toggle("active");
+  menuToggle.classList.toggle("active");
+  const icon = menuToggle.querySelector("i");
+  icon.classList.toggle("fa-bars");
+  icon.classList.toggle("fa-xmark");
+});
+
 
   // Cierra el menú al hacer clic en un enlace
   const navLinks = navbar.querySelectorAll("a");
