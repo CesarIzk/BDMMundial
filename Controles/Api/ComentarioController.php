@@ -36,40 +36,61 @@ class ComentarioController
     /**
      * Crear nuevo comentario (POST)
      */
-    public function store()
-    {
-        if (!isset($_SESSION['user'])) {
-            http_response_code(401);
-            echo json_encode(['error' => 'No autenticado']);
-            return;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Método no permitido']);
-            return;
-        }
-
-        $idPublicacion = $_POST['idPublicacion'] ?? null;
-        $contenido = trim($_POST['contenido'] ?? '');
-        $idUsuario = $_SESSION['user']['idUsuario'];
-
-        if (!$idPublicacion || empty($contenido)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Faltan datos']);
-            return;
-        }
-
-        try {
-            $this->comentarioModel->create($idPublicacion, $idUsuario, $contenido);
-
-            http_response_code(201);
-            echo json_encode(['success' => true, 'message' => 'Comentario agregado']);
-        } catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Error al crear comentario']);
-        }
+   public function store()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
+
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'No autenticado']);
+        return;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Método no permitido']);
+        return;
+    }
+
+    $idPublicacion = $_POST['idPublicacion'] ?? null;
+    $contenido = trim($_POST['contenido'] ?? '');
+    $idUsuario = $_SESSION['user']['idUsuario'];
+
+    if (!$idPublicacion || empty($contenido)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Faltan datos']);
+        return;
+    }
+
+    try {
+        // Guardar en la base de datos
+        $this->comentarioModel->create($idPublicacion, $idUsuario, $contenido);
+
+        // Obtener datos del usuario actual
+        $username = $_SESSION['user']['username'] ?? 'Anónimo';
+        $fotoPerfil = $_SESSION['user']['fotoPerfil'] ?? null;
+        $fechaComentario = date('Y-m-d H:i:s');
+
+        // Enviar respuesta completa al frontend
+        http_response_code(201);
+        echo json_encode([
+            'success' => true,
+            'username' => $username,
+            'texto' => htmlspecialchars($contenido, ENT_QUOTES, 'UTF-8'),
+            'fechaComentario' => $fechaComentario,
+            'fotoPerfil' => $fotoPerfil
+        ]);
+    } catch (\Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Error al crear comentario',
+            'detalles' => $e->getMessage()
+        ]);
+    }
+}
+
 
     /**
      * Eliminar un comentario (DELETE)
