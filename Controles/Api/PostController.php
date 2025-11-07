@@ -384,33 +384,55 @@ private function isRailway()
 private function handleImageUpload($file)
 {
     try {
-        if ($file['error'] === UPLOAD_ERR_NO_FILE) return null;
-        if ($file['error'] !== UPLOAD_ERR_OK) return false;
+        if (!isset($file) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+            error_log("📂 No se recibió archivo de imagen");
+            return null;
+        }
 
-        // Si estamos en Railway -> Cloudinary
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            error_log("⚠️ Error de subida PHP: " . $file['error']);
+            return false;
+        }
+
+        // 🧪 Verificar tamaño
+        if ($file['size'] === 0) {
+            error_log("⚠️ Imagen vacía o corrupta: " . $file['name']);
+            return false;
+        }
+
+        // 🌩️ Cloudinary si estamos en Railway
         if ($this->isRailway()) {
             $cloudinary = $this->getCloudinaryInstance();
             $upload = $cloudinary->uploadApi()->upload($file['tmp_name'], [
-                'folder' => 'mundialfan/imagenes'
+                'folder' => 'mundialfan/imagenes',
+                'resource_type' => 'image'
             ]);
+            error_log("✅ Imagen subida a Cloudinary: " . $upload['secure_url']);
             return $upload['secure_url'];
         }
 
-        // Local (desarrollo)
+        // 💾 Local
         $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/publics/imagenes/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = 'post_' . time() . '_' . uniqid() . '.' . $ext;
         $rutaRelativa = '/uploads/publics/imagenes/' . $filename;
-        move_uploaded_file($file['tmp_name'], $uploadDir . $filename);
 
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+            error_log("❌ Falló move_uploaded_file()");
+            return false;
+        }
+
+        error_log("✅ Imagen guardada localmente: " . $rutaRelativa);
         return $rutaRelativa;
+
     } catch (\Exception $e) {
-        error_log("Cloudinary upload error: " . $e->getMessage());
+        error_log("❌ Cloudinary upload error: " . $e->getMessage());
         return false;
     }
 }
+
 
 /**
  * 🎥 Subir video (local o Cloudinary)
