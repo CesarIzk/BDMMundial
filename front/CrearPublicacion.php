@@ -3,7 +3,7 @@
 <div class="contenedor">
     <div class="header-seccion">
         <h2 class="titulo-seccion">✍️ Crear Nueva Publicación</h2>
-        <a href="/Post" class="btn-volver">← Volver a publicaciones</a>
+        <a href="/public" class="btn-volver">← Volver a publicaciones</a>
     </div>
     
     <form id="formPublicacion" enctype="multipart/form-data" class="form-publicacion">
@@ -115,7 +115,7 @@
                 <span class="btn-icon">✓</span>
                 <span class="btn-text">Publicar</span>
             </button>
-            <a href="/Post" class="btn-cancelar">
+            <a href="/public" class="btn-cancelar">
                 <span class="btn-icon">✕</span>
                 <span class="btn-text">Cancelar</span>
             </a>
@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log('📤 Enviando publicación...');
             
-            const response = await fetch('/Post/store', {
+            const response = await fetch('/public/store', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
@@ -712,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 contador.textContent = '0/500 caracteres';
                 
                 setTimeout(() => {
-                    window.location.href = '/Post';
+                    window.location.href = '/public';
                 }, 1500);
             } else {
                 if (response.status === 401) {
