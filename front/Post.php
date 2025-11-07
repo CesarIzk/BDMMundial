@@ -109,7 +109,7 @@
 </div>
 
 <script>
-// ==== MODAL DETALLE ==== (VERSIÓN MEJORADA)
+// ==== MODAL DETALLE CON COMENTARIOS ====
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById('modal-post');
   const modalBody = document.getElementById('modal-body');
@@ -128,21 +128,17 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.style.display = 'flex';
 
       try {
-        // 🔧 OPCIÓN A: Intenta primero con query params
+        // 1️⃣ Cargar publicación
         let res = await fetch(`/Post/view?id=${postId}`);
-        
-        // 🔧 OPCIÓN B: Si falla, intenta con la ruta dinámica
-        if (!res.ok) {
-          res = await fetch(`/Post/${postId}`);
-        }
-        
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        
+        if (!res.ok) res = await fetch(`/Post/${postId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const post = await res.json();
 
-        // Construir contenido del modal
+        // 2️⃣ Cargar comentarios
+        const comentariosRes = await fetch(`/api/comentarios/${post.idPublicacion}`);
+        const comentarios = comentariosRes.ok ? await comentariosRes.json() : [];
+
+        // === MEDIOS ===
         let mediaHTML = '';
         if (post.rutamulti) {
           if (post.tipoContenido === 'imagen') {
@@ -156,34 +152,100 @@ document.addEventListener("DOMContentLoaded", () => {
           mediaHTML = '<div style="background:#333;padding:3rem;text-align:center;border-radius:8px;">Sin multimedia</div>';
         }
 
+        // === COMENTARIOS ===
+        let comentariosHTML = '';
+        if (comentarios.length > 0) {
+          comentariosHTML = `
+            <div class="mt-4">
+              <h5><i class="fas fa-comments"></i> Comentarios (${comentarios.length})</h5>
+              <ul class="list-group mt-3">
+                ${comentarios.map(c => `
+                  <li class="list-group-item">
+                    <strong>@${c.username}</strong>
+                    <p class="mb-1">${c.texto}</p>
+                    <small class="text-muted">${c.fechaComentario}</small>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          `;
+        } else {
+          comentariosHTML = `
+            <div class="mt-4 text-center text-muted">
+              <i class="fas fa-comment-slash fa-2x"></i>
+              <p class="mt-2">Sin comentarios aún.</p>
+            </div>
+          `;
+        }
+
+        // === FORMULARIO DE NUEVO COMENTARIO ===
+        comentariosHTML += `
+          <form id="form-comentario" class="mt-4">
+            <textarea id="textoComentario" class="form-control" rows="2" placeholder="Escribe un comentario..."></textarea>
+            <button type="submit" class="btn btn-secondary mt-2">
+              <i class="fas fa-paper-plane"></i> Enviar comentario
+            </button>
+          </form>
+        `;
+
+        // === ESTRUCTURA COMPLETA DEL MODAL ===
         modalBody.innerHTML = `
           ${mediaHTML}
-          <div style="padding:1.5rem 0;">
-            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
-              ${post.fotoPerfil ? `<img src="${post.fotoPerfil}" alt="${post.username}" style="width:50px;height:50px;border-radius:50%;">` : ''}
+          <div class="mt-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              ${post.fotoPerfil ? `<img src="${post.fotoPerfil}" alt="${post.username}" class="rounded-circle" style="width:50px;height:50px;">` : ''}
               <div>
-                <h3 style="margin:0;">${post.Nombre || post.username}</h3>
-                <p style="margin:0;color:#888;">@${post.username}</p>
+                <h4 class="mb-0">${post.Nombre || post.username}</h4>
+                <p class="text-muted mb-0">@${post.username}</p>
               </div>
             </div>
             <p style="font-size:1.1rem;line-height:1.6;">${post.texto}</p>
-            <div style="display:flex;gap:2rem;margin-top:1rem;color:#888;">
+            <div class="d-flex gap-4 text-muted mt-3">
               <span><i class="fas fa-heart"></i> <strong>${post.likes}</strong> Likes</span>
               <span><i class="fas fa-tag"></i> ${post.categoriaNombre || 'Sin categoría'}</span>
             </div>
           </div>
-          <button class="btn btn-primary mt-3" onclick="window.location.href='/publicaciones'">
-            Ver más publicaciones
-          </button>
+          ${comentariosHTML}
         `;
+
+        // === MANEJAR ENVÍO DEL NUEVO COMENTARIO ===
+        const formComentario = document.getElementById('form-comentario');
+        formComentario.addEventListener('submit', async e => {
+          e.preventDefault();
+          const texto = document.getElementById('textoComentario').value.trim();
+          if (!texto) return alert('Escribe un comentario antes de enviar.');
+
+          const resp = await fetch('/api/comentarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `idPublicacion=${post.idPublicacion}&texto=${encodeURIComponent(texto)}`
+          });
+
+          if (resp.ok) {
+            const nuevo = await resp.json();
+            const lista = formComentario.previousElementSibling.querySelector('ul');
+            if (lista) {
+              lista.innerHTML += `
+                <li class="list-group-item">
+                  <strong>@${nuevo.username}</strong>
+                  <p class="mb-1">${nuevo.texto}</p>
+                  <small class="text-muted">${nuevo.fechaComentario}</small>
+                </li>
+              `;
+            }
+            formComentario.reset();
+          } else {
+            alert('❌ No se pudo enviar el comentario.');
+          }
+        });
 
       } catch (err) {
         console.error('❌ Error al cargar publicación:', err);
         modalBody.innerHTML = `
           <div style="text-align:center;padding:3rem;">
-            <i class="fas fa-exclamation-triangle fa-3x" style="color:#e74c3c;"></i>
-            <h3 style="margin-top:1rem;">Error al cargar la publicación</h3>
-            <p style="color:#888;">${err.message}</p>
+            <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+            <h3 class="mt-3">Error al cargar la publicación</h3>
+            <p class="text-muted">${err.message}</p>
             <button class="btn btn-secondary mt-3" onclick="document.getElementById('modal-post').style.display='none'">
               Cerrar
             </button>
@@ -200,5 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
 
 <?php require 'partials/footer.php'; ?>

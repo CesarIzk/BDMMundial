@@ -55,7 +55,6 @@ $router->post('/admin/paises/store', 'Controles/Api/AdminPaisController@store')-
 $router->get('/', 'controls/inicio.php');
 $router->get('/tienda', 'controls/tienda.php');
 $router->get('/stats', 'controls/stats.php');
-$router->get('/publicaciones', 'controls/Post.php');
 
 // ========== CAMPEONATOS ==========
 $router->get('/campeonatos', 'Controles/Api/CampeonatoController@index');
