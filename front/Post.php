@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const post = await res.json();
 
         // 2️⃣ Cargar comentarios
-        const comentariosRes = await fetch(`/api/comentarios/${post.idPublicacion}`);
+        const comentariosRes = await fetch(`/api/comentarios`);
         const comentarios = comentariosRes.ok ? await comentariosRes.json() : [];
 
         // === MEDIOS ===
