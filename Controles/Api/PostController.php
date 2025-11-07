@@ -341,14 +341,20 @@ class PostController
 
 private function getCloudinaryInstance()
 {
-    return new Cloudinary([
+    // Compatibilidad entre local (.env) y Railway
+    $cloudName = $_ENV['CLOUDINARY_CLOUD_NAME'] ?? $_ENV['CLOUDINARY_NAME'] ?? '';
+    $apiKey    = $_ENV['CLOUDINARY_API_KEY'] ?? $_ENV['CLOUDINARY_KEY'] ?? '';
+    $apiSecret = $_ENV['CLOUDINARY_API_SECRET'] ?? $_ENV['CLOUDINARY_APISECRET'] ?? '';
+
+    return new \Cloudinary\Cloudinary([
         'cloud' => [
-            'cloud_name' => $_ENV['CLOUDINARY_NAME'] ?? '',
-            'api_key'    => $_ENV['CLOUDINARY_KEY'] ?? '',
-            'api_secret' => $_ENV['CLOUDINARY_APISECRET'] ?? ''
+            'cloud_name' => $cloudName,
+            'api_key'    => $apiKey,
+            'api_secret' => $apiSecret,
         ]
     ]);
 }
+
 
 private function isRailway()
 {
