@@ -196,27 +196,60 @@ public function updateAvatar()
     $fileName = 'avatar_' . $id . '_' . time() . '.' . $extension;
 
     // 🌐 Si estamos en Railway (usa Cloudinary)
-    if (isset($_ENV['CLOUDINARY_URL']) && !empty($_ENV['CLOUDINARY_URL'])) {
-        try {
-            error_log("🌩️ CLOUDINARY_URL detectado: " . ($_ENV['CLOUDINARY_URL'] ?? 'NO DEFINIDO'));
+// 🌐 Si estamos en Railway o hay configuración de Cloudinary
+if (
+    isset($_ENV['RAILWAY_ENVIRONMENT']) ||
+    isset($_ENV['CLOUDINARY_NAME']) ||
+    isset($_ENV['CLOUDINARY_CLOUD_NAME']) ||
+    (isset($_ENV['CLOUDINARY_URL']) && !empty($_ENV['CLOUDINARY_URL']))
+) {
 
-            $cloudinary = new Cloudinary($_ENV['CLOUDINARY_URL']);
+       // 🌩️ Detectar entorno y credenciales
+$cloudName = $_ENV['CLOUDINARY_CLOUD_NAME'] ?? $_ENV['CLOUDINARY_NAME'] ?? '';
+$apiKey    = $_ENV['CLOUDINARY_API_KEY'] ?? $_ENV['CLOUDINARY_KEY'] ?? '';
+$apiSecret = $_ENV['CLOUDINARY_API_SECRET'] ?? $_ENV['CLOUDINARY_APISECRET'] ?? '';
+$isRailway = isset($_ENV['RAILWAY_ENVIRONMENT']);
 
-            // Subir a carpeta personalizada del usuario
-            $upload = $cloudinary->uploadApi()->upload($_FILES['avatar']['tmp_name'], [
-                'folder' => "mundialfan/usuarios/$id/avatar",
-                'public_id' => pathinfo($fileName, PATHINFO_FILENAME),
-                'overwrite' => true,
-                'resource_type' => 'image'
-            ]);
+// 🧠 Debug
+error_log("🌩️ CLOUDINARY DEBUG => " . json_encode([
+    'cloud' => $cloudName,
+    'key' => substr($apiKey, 0, 4) . '...',
+    'env' => $isRailway ? 'railway' : 'local'
+]));
 
-            $rutaRelativa = $upload['secure_url'];
-            error_log("☁️ Avatar subido a Cloudinary: " . $rutaRelativa);
-        } catch (\Exception $e) {
-            error_log("❌ Error Cloudinary avatar: " . $e->getMessage());
-            $_SESSION['error'] = "Error al subir la imagen a Cloudinary.";
-            return redirect('/configuracion');
-        }
+try {
+    if ($isRailway && !empty($cloudName) && !empty($apiKey) && !empty($apiSecret)) {
+        $cloudinary = new Cloudinary([
+            'cloud' => [
+                'cloud_name' => $cloudName,
+                'api_key'    => $apiKey,
+                'api_secret' => $apiSecret,
+            ]
+        ]);
+    } elseif (!empty($_ENV['CLOUDINARY_URL'])) {
+        // Local con CLOUDINARY_URL directa
+        $cloudinary = new Cloudinary($_ENV['CLOUDINARY_URL']);
+    } else {
+        throw new \Exception("Cloudinary no configurado correctamente");
+    }
+
+    // 📤 Subir imagen
+    $upload = $cloudinary->uploadApi()->upload($_FILES['avatar']['tmp_name'], [
+        'folder' => "mundialfan/usuarios/$id/avatar",
+        'public_id' => pathinfo($fileName, PATHINFO_FILENAME),
+        'overwrite' => true,
+        'resource_type' => 'image'
+    ]);
+
+    $rutaRelativa = $upload['secure_url'];
+    error_log("✅ Avatar subido correctamente: " . $rutaRelativa);
+
+} catch (\Exception $e) {
+    error_log("❌ Error al subir avatar a Cloudinary: " . $e->getMessage());
+    $_SESSION['error'] = "Error al subir la imagen a Cloudinary.";
+    return redirect('/configuracion');
+}
+
     } else {
         // 🗂️ Guardar localmente en desarrollo
         $userDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/users/' . $id . '/avatar/';
