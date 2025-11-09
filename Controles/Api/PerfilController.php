@@ -198,6 +198,8 @@ public function updateAvatar()
     // 🌐 Si estamos en Railway (usa Cloudinary)
     if (isset($_ENV['CLOUDINARY_URL']) && !empty($_ENV['CLOUDINARY_URL'])) {
         try {
+            error_log("🌩️ CLOUDINARY_URL detectado: " . ($_ENV['CLOUDINARY_URL'] ?? 'NO DEFINIDO'));
+
             $cloudinary = new Cloudinary($_ENV['CLOUDINARY_URL']);
 
             // Subir a carpeta personalizada del usuario
