@@ -16,85 +16,116 @@ class AuthController
     /**
      * Procesar login
      */
-    public function login()
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return redirect('/');
-        }
-
-        $email = trim($_POST['correo'] ?? '');
-        $password = trim($_POST['contrasena'] ?? '');
-
-        // Validar que no estén vacíos
-        if (empty($email) || empty($password)) {
-            return $this->redirectWithError('Por favor completa todos los campos');
-        }
-
-        // Buscar usuario por email
-        $user = $this->db->query(
-            'SELECT * FROM users WHERE email = ?',
-            [$email]
-        )->find();
-
-        if (!$user) {
-            return $this->redirectWithError('Email o contraseña incorrectos');
-        }
-
-        // Verificar contraseña
-        if ($user['contrasena'] !== $password) {
-            return $this->redirectWithError('Email o contraseña incorrectos');
-        }
-
-        // Verificar si usuario está activo
-        if ($user['estado'] !== 'activo') {
-            return $this->redirectWithError('Tu cuenta ha sido desactivada');
-        }
-
-        // ✅ CRÍTICO: Regenerar ID de sesión para prevenir session fixation
-        session_regenerate_id(true);
-
-        // ✅ Crear sesión con todos los datos necesarios
-        $_SESSION['user'] = [
-            'idUsuario' => (int)$user['idUsuario'],
-            'Nombre' => $user['Nombre'],
-            'email' => $user['email'],
-            'username' => $user['username'],
-            'rol' => $user['rol'],
-            'fotoPerfil' => $user['fotoPerfil'],
-            'estado' => $user['estado']
-        ];
-
-        // ✅ Marcar tiempo de login
-        $_SESSION['login_time'] = time();
-        $_SESSION['last_activity'] = time();
-
-        // 🔍 DEBUG LOG
-        error_log("=== LOGIN EXITOSO ===");
-        error_log("User ID: " . $user['idUsuario']);
-        error_log("Session ID: " . session_id());
-        error_log("Session data: " . print_r($_SESSION['user'], true));
-
-        // Actualizar última actividad en BD
-        try {
-            $this->db->query(
-                'UPDATE users SET ultimaActividad = NOW() WHERE idUsuario = ?',
-                [$user['idUsuario']]
-            );
-        } catch (\Exception $e) {
-            error_log("Error actualizando última actividad: " . $e->getMessage());
-        }
-
-        // ✅ Asegurar que la sesión se escriba antes de redirigir
-        session_write_close();
-        session_start(); // Reabrir para la siguiente petición
-
-        // Redirigir según rol
-        if ($user['rol'] === 'admin') {
-            return redirect('/admin/usuarios');
-        }
-
+  public function login()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         return redirect('/');
     }
+
+    $email = trim($_POST['correo'] ?? '');
+    $password = trim($_POST['contrasena'] ?? '');
+
+    // Validar campos vacíos
+    if (empty($email) || empty($password)) {
+        return $this->redirectWithError('Por favor completa todos los campos');
+    }
+
+    // Buscar usuario por email
+    $user = $this->db->query('SELECT * FROM users WHERE email = ?', [$email])->find();
+
+    if (!$user) {
+        return $this->redirectWithError('Email o contraseña incorrectos');
+    }
+
+    // ======================================================
+    // 🔐 VALIDAR CONTRASEÑA (HASH + TEXTO PLANO COMPATIBLE)
+    // ======================================================
+    $hashAlmacenado = $user['contrasena'];
+    $isValid = false;
+
+    if (str_starts_with($hashAlmacenado, '$2y$')) {
+        // 🟢 Contraseña con hash bcrypt (nueva)
+        if (password_verify($password, $hashAlmacenado)) {
+            $isValid = true;
+        }
+    } else {
+        // ⚠️ Contraseña antigua sin hash (texto plano)
+        if ($password === $hashAlmacenado) {
+            $isValid = true;
+
+            // 🚀 Migrar automáticamente a hash bcrypt seguro
+            $nuevoHash = password_hash($password, PASSWORD_BCRYPT);
+            try {
+                $this->db->query(
+                    'UPDATE users SET contrasena = ? WHERE idUsuario = ?',
+                    [$nuevoHash, $user['idUsuario']]
+                );
+                error_log("🔄 Contraseña del usuario '{$user['email']}' actualizada a bcrypt.");
+            } catch (\Exception $e) {
+                error_log("⚠️ Error al actualizar hash: " . $e->getMessage());
+            }
+        }
+    }
+
+    // Si no es válida en ninguno de los dos casos
+    if (!$isValid) {
+        return $this->redirectWithError('Email o contraseña incorrectos');
+    }
+
+    // ======================================================
+    // 🧱 ESTADO DEL USUARIO
+    // ======================================================
+    if ($user['estado'] !== 'activo') {
+        return $this->redirectWithError('Tu cuenta ha sido desactivada');
+    }
+
+    // ======================================================
+    // 🧠 CREAR SESIÓN SEGURA
+    // ======================================================
+    session_regenerate_id(true);
+
+    $_SESSION['user'] = [
+        'idUsuario' => (int)$user['idUsuario'],
+        'Nombre' => $user['Nombre'],
+        'email' => $user['email'],
+        'username' => $user['username'],
+        'rol' => $user['rol'],
+        'fotoPerfil' => $user['fotoPerfil'],
+        'estado' => $user['estado']
+    ];
+
+    $_SESSION['login_time'] = time();
+    $_SESSION['last_activity'] = time();
+
+    // 🔍 DEBUG LOG
+    error_log("=== LOGIN EXITOSO ===");
+    error_log("Usuario: {$user['email']}");
+    error_log("Rol: {$user['rol']}");
+    error_log("Session ID: " . session_id());
+
+    // Actualizar última actividad
+    try {
+        $this->db->query(
+            'UPDATE users SET ultimaActividad = NOW() WHERE idUsuario = ?',
+            [$user['idUsuario']]
+        );
+    } catch (\Exception $e) {
+        error_log("Error actualizando última actividad: " . $e->getMessage());
+    }
+
+    session_write_close();
+    session_start();
+
+    // ======================================================
+    // 🚀 REDIRECCIÓN SEGÚN ROL
+    // ======================================================
+    if ($user['rol'] === 'admin') {
+        return redirect('/admin/dashboard');
+    }
+
+    return redirect('/');
+}
+
 
     /**
      * Procesar registro

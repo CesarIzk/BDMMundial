@@ -313,4 +313,12 @@ public function findById($id)
             [$inicio, $fin, (int)$limit]
         )->get();
     }
+    public function existsByEmailOrUsername($email, $username)
+{
+    return (bool) $this->db->query(
+        'SELECT idUsuario FROM users WHERE email = ? OR username = ?',
+        [$email, $username]
+    )->find();
+}
+
 }

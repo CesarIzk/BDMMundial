@@ -16,67 +16,52 @@ class AdminController
         $this->publicacionModel = new Publicacion();
     }
 
-    // --- MÉTODOS NUEVOS ---
-
-    /**
-     * Mostrar el Dashboard principal
-     */
+    // ========================================================
+    // 📊 DASHBOARD PRINCIPAL
+    // ========================================================
     public function dashboard()
-{
-    $this->authorizeAdmin();
+    {
+        $this->authorizeAdmin();
 
-    // 1. Tarjetas de Estadísticas
-    $stats = [
-        'totalUsuarios' => $this->userModel->count(),
-        'nuevosHoy' => $this->userModel->countNuevosHoy(),
-        'totalPublicaciones' => $this->publicacionModel->countAll(),
-        'publicacionesHoy' => $this->publicacionModel->countNuevasHoy(),
-        'usuariosActivos' => $this->userModel->countActivosRecientes(7),
-        'contenidoOculto' => $this->publicacionModel->countByEstado('oculto'),
+        $stats = [
+            'totalUsuarios' => $this->userModel->count(),
+            'nuevosHoy' => $this->userModel->countNuevosHoy(),
+            'totalPublicaciones' => $this->publicacionModel->countAll(),
+            'publicacionesHoy' => $this->publicacionModel->countNuevasHoy(),
+            'usuariosActivos' => $this->userModel->countActivosRecientes(7),
+            'contenidoOculto' => $this->publicacionModel->countByEstado('oculto'),
+            'totalComentarios' => $this->publicacionModel->getTotalComentarios()
+        ];
 
-        // ✅ Nuevo: total de comentarios (usando el campo mantenido por triggers)
-        'totalComentarios' => $this->publicacionModel->getTotalComentarios()
-    ];
+        $topUsers = $this->userModel->getTopUsers(5);
+        $recentActivity = $this->getRecentActivity(10);
+        $chartData = $this->getChartData7Dias();
 
-    // 2. Top Usuarios
-    $topUsers = $this->userModel->getTopUsers(5); 
+        return view('admin/dashboard.php', [
+            'stats' => $stats,
+            'topUsers' => $topUsers,
+            'recentActivity' => $recentActivity,
+            'chartLabels' => $chartData['labels'],
+            'chartUsuarios' => $chartData['usuarios'],
+            'chartPublicaciones' => $chartData['publicaciones']
+        ]);
+    }
 
-    // 3. Actividad Reciente
-    $recentActivity = $this->getRecentActivity(10);
-
-    // 4. Datos del Gráfico
-    $chartData = $this->getChartData7Dias();
-
-    return view('admin/dashboard.php', [
-        'stats' => $stats,
-        'topUsers' => $topUsers,
-        'recentActivity' => $recentActivity,
-        'chartLabels' => $chartData['labels'],
-        'chartUsuarios' => $chartData['usuarios'],
-        'chartPublicaciones' => $chartData['publicaciones']
-    ]);
-}
-
-
-    /**
-     * Mostrar la página de Reportes
-     */
+    // ========================================================
+    // 📈 REPORTES
+    // ========================================================
     public function reportes()
     {
         $this->authorizeAdmin();
 
-        // 1. Obtener filtros de fecha
         $fechaInicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
         $fechaFin = $_GET['fecha_fin'] ?? date('Y-m-d');
 
-        // 2. Métricas Generales
         $reportes = $this->publicacionModel->getReporteGeneralRango($fechaInicio, $fechaFin);
         $reportes['totalUsuarios'] = $this->userModel->countRango($fechaInicio, $fechaFin);
-        // Simplificamos crecimientos (puedes mejorarlo luego)
-        $reportes['crecimientoUsuarios'] = 0; 
+        $reportes['crecimientoUsuarios'] = 0;
         $reportes['crecimientoPublicaciones'] = 0;
 
-        // 3. Gráficos
         $paises = $this->userModel->getUsuariosPorPais();
         $paisesLabels = array_column($paises, 'pais');
         $paisesData = array_column($paises, 'total');
@@ -88,11 +73,9 @@ class AdminController
             'video' => $contenido['video'] ?? 0,
         ];
 
-        // 4. Tablas Detalladas
         $detallesDiarios = $this->publicacionModel->getReporteDetalladoRango($fechaInicio, $fechaFin);
         $topUsuariosActivos = $this->userModel->getTopActivosRango($fechaInicio, $fechaFin, 10);
         $topPublicaciones = $this->publicacionModel->getTopPopularesRango($fechaInicio, $fechaFin, 10);
-
 
         return view('admin/reportes.php', [
             'reportes' => $reportes,
@@ -105,23 +88,20 @@ class AdminController
         ]);
     }
 
-
-    // --- MÉTODOS CORREGIDOS (sin la barra '/') ---
-
+    // ========================================================
+    // 👥 USUARIOS Y PUBLICACIONES
+    // ========================================================
     public function users()
     {
         $this->authorizeAdmin();
-        $usuarios = $this->userModel->all(100); 
-        // CORREGIDO: Quita la barra inicial
+        $usuarios = $this->userModel->all(100);
         return view('admin/usuarios.php', ['usuarios' => $usuarios]);
     }
 
-  public function posts()
+    public function posts()
     {
         $this->authorizeAdmin();
 
-        // ¡AQUÍ ESTÁ EL ARREGLO!
-        // Definimos las variables que faltaban
         $page = (int)($_GET['page'] ?? 1);
         $limit = 25;
         $offset = ($page - 1) * $limit;
@@ -138,8 +118,6 @@ class AdminController
         ]);
     }
 
-    // ... (tus otros métodos: deactivateUser, activateUser, hidePost, showPost) ...
-    // Asegúrate de que el helper is_array() esté en todos los que reciben ID:
     public function deactivateUser($params)
     {
         $this->authorizeAdmin();
@@ -176,26 +154,87 @@ class AdminController
         return redirect('/admin/publicaciones');
     }
 
-    // --- MÉTODOS PRIVADOS HELPER ---
+    // ========================================================
+    // 🧱 CREAR NUEVO ADMINISTRADOR
+    // ========================================================
+    public function createAdminView()
+    {
+        $this->authorizeAdmin();
+        return view('admin/crear-admin.php');
+    }
 
+public function storeAdmin()
+{
+    $this->authorizeAdmin();
+
+    $nombre = trim($_POST['nombre'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $confirmNewPassword = trim($_POST['confirm_new_password'] ?? '');
+    $confirmAdminPassword = trim($_POST['confirm_admin_password'] ?? '');
+
+    // 🚨 Validar campos vacíos
+    if (!$nombre || !$email || !$username || !$password || !$confirmNewPassword || !$confirmAdminPassword) {
+        $_SESSION['error'] = "Todos los campos son obligatorios.";
+        return redirect('/admin/crear');
+    }
+
+    // 🧩 Validar coincidencia de contraseña nueva
+    if ($password !== $confirmNewPassword) {
+        $_SESSION['error'] = "Las contraseñas del nuevo administrador no coinciden.";
+        return redirect('/admin/crear');
+    }
+
+    // 🔐 Verificar contraseña del admin actual (autorización)
+    $adminActual = $_SESSION['user'];
+    $adminDB = $this->userModel->findById($adminActual['idUsuario']);
+
+    if (!$adminDB || !password_verify($confirmAdminPassword, $adminDB['contrasena'])) {
+        $_SESSION['error'] = "Tu contraseña no es correcta. No tienes permiso para crear un nuevo administrador.";
+        return redirect('/admin/crear');
+    }
+
+    // 🚫 Verificar duplicados
+    if ($this->userModel->existsByEmailOrUsername($email, $username)) {
+        $_SESSION['error'] = "El correo o nombre de usuario ya está en uso.";
+        return redirect('/admin/crear');
+    }
+
+    // ✅ Crear el nuevo administrador
+    $hash = password_hash($password, PASSWORD_BCRYPT);
+    $this->userModel->create([
+        'Nombre' => $nombre,
+        'email' => $email,
+        'username' => $username,
+        'contrasena' => $hash,
+        'rol' => 'admin',
+        'estado' => 'activo'
+    ]);
+
+    $_SESSION['success'] = "Administrador creado exitosamente.";
+    return redirect('/admin/usuarios');
+}
+
+
+    // ========================================================
+    // 🔒 FUNCIONES PRIVADAS
+    // ========================================================
     private function authorizeAdmin()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+
         if (!isset($_SESSION['user']) || $_SESSION['user']['rol'] !== 'admin') {
-            $_SESSION['error'] = "No tienes permisos";
+            $_SESSION['error'] = "No tienes permisos.";
             header('Location: /');
             exit;
         }
     }
 
-    /**
-     * Helper para combinar actividad reciente
-     */
     private function getRecentActivity($limit = 10)
     {
-        // Esta es una simulación. Idealmente tendrías una tabla 'logs'
         $nuevosUsuarios = $this->userModel->getRecientes($limit);
         $nuevosPosts = $this->publicacionModel->getRecientes($limit);
 
@@ -215,51 +254,38 @@ class AdminController
             ];
         }
 
-        // Ordenar por fecha descendente
-        usort($activity, function($a, $b) {
-            return strtotime($b['fecha']) - strtotime($a['fecha']);
-        });
-
+        usort($activity, fn($a, $b) => strtotime($b['fecha']) - strtotime($a['fecha']));
         return array_slice($activity, 0, $limit);
     }
 
-    /**
-     * Helper para formatear datos del gráfico
-     */
     private function getChartData7Dias()
     {
         $labels = [];
-        $dataUsuarios = [];
-        $dataPublicaciones = [];
-        
-        // Crear etiquetas para los últimos 7 días
+        $diasCompletos = [];
+
         for ($i = 6; $i >= 0; $i--) {
             $labels[] = date('M d', strtotime("-$i days"));
             $diasCompletos[date('Y-m-d', strtotime("-$i days"))] = 0;
         }
 
-        // Obtener datos
         $usuarios = $this->userModel->getNuevosUsuarios7Dias();
         $publicaciones = $this->publicacionModel->getNuevasPublicaciones7Dias();
-        
-        // Unir datos de usuarios
-        $dataTemp = $diasCompletos;
-        foreach($usuarios as $item) {
-            $dataTemp[$item['dia']] = $item['total'];
-        }
-        $dataUsuarios = array_values($dataTemp);
 
-        // Unir datos de publicaciones
-        $dataTemp = $diasCompletos;
-        foreach($publicaciones as $item) {
-            $dataTemp[$item['dia']] = $item['total'];
-        }
-        $dataPublicaciones = array_values($dataTemp);
+        $dataUsuarios = $this->mergeData($diasCompletos, $usuarios);
+        $dataPublicaciones = $this->mergeData($diasCompletos, $publicaciones);
 
         return [
             'labels' => $labels,
             'usuarios' => $dataUsuarios,
             'publicaciones' => $dataPublicaciones,
         ];
+    }
+
+    private function mergeData($diasBase, $datos)
+    {
+        foreach ($datos as $item) {
+            $diasBase[$item['dia']] = $item['total'];
+        }
+        return array_values($diasBase);
     }
 }

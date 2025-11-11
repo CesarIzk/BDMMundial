@@ -33,6 +33,9 @@ $router->get('/admin/reportes', 'Controles/Api/AdminController@reportes')->only(
 $router->get('/admin/usuarios', 'Controles/Api/AdminController@users')->only('admin');
 $router->post('/admin/usuario/{id}/baja', 'Controles/Api/AdminController@deactivateUser')->only('admin');
 $router->post('/admin/usuario/{id}/activar', 'Controles/Api/AdminController@activateUser')->only('admin');
+// Crear administrador
+$router->get('/admin/crear', 'Controles/Api/AdminController@createAdminView')->only('admin');
+$router->post('/admin/crear', 'Controles/Api/AdminController@storeAdmin')->only('admin');
 
 // Admin - Publicaciones
 $router->get('/admin/publicaciones', 'Controles/Api/AdminController@posts')->only('admin');
